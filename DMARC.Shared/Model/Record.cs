@@ -1,4 +1,5 @@
 #region License
+
 // DMARC report aggregator
 // Copyright (C) 2018 Tomasz Kołosowski
 // 
@@ -14,18 +15,22 @@
 // 
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 #endregion
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Xml.Linq;
 
 namespace DMARC.Shared.Model
 {
-    public class Record : DbModel
+    public class Record
     {
-        public Record() { }
-        
+        public Record()
+        {
+        }
+
         public Record(XElement xRecord)
         {
             // Row
@@ -79,5 +84,43 @@ namespace DMARC.Shared.Model
         // Auth result
         public virtual IReadOnlyList<DkimAuthResult> Dkims { get; set; }
         public virtual IReadOnlyList<SpfAuthResult> Spfs { get; set; }
+
+        protected bool Equals(Record other)
+        {
+            return string.Equals(SourceIp, other.SourceIp) && Count == other.Count &&
+                   Disposition == other.Disposition && Dkim == other.Dkim && Spf == other.Spf &&
+                   Reasons.SequenceEqual(other.Reasons) && string.Equals(EnvelopeTo, other.EnvelopeTo) &&
+                   string.Equals(HeaderFrom, other.HeaderFrom) && Dkims.SequenceEqual(other.Dkims) &&
+                   Spfs.SequenceEqual(other.Spfs);
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (ReferenceEquals(null, obj)) return false;
+            if (ReferenceEquals(this, obj)) return true;
+            if (obj.GetType() != this.GetType()) return false;
+            return Equals((Record) obj);
+        }
+
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                var hashCode = (SourceIp != null ? SourceIp.GetHashCode() : 0);
+                hashCode = (hashCode * 397) ^ Count;
+                hashCode = (hashCode * 397) ^ (int) Disposition;
+                hashCode = (hashCode * 397) ^ (int) Dkim;
+                hashCode = (hashCode * 397) ^ (int) Spf;
+                if (Reasons != null)
+                    hashCode = Reasons.Aggregate(hashCode, (current, reason) => (current * 397) ^ reason.GetHashCode());
+                hashCode = (hashCode * 397) ^ (EnvelopeTo != null ? EnvelopeTo.GetHashCode() : 0);
+                hashCode = (hashCode * 397) ^ (HeaderFrom != null ? HeaderFrom.GetHashCode() : 0);
+                if (Dkims != null)
+                    hashCode = Dkims.Aggregate(hashCode, (current, result) => (current * 397) ^ result.GetHashCode());
+                if (Spfs != null)
+                    hashCode = Spfs.Aggregate(hashCode, (current, result) => (current * 397) ^ result.GetHashCode());
+                return hashCode;
+            }
+        }
     }
 }

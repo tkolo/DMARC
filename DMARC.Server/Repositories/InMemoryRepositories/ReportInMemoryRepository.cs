@@ -30,7 +30,6 @@ namespace DMARC.Server.Repositories.InMemoryRepositories
         {
             lock (Reports)
             {
-                report.Id = Reports.Count + 1;
                 Reports.Add(report);
             }
 

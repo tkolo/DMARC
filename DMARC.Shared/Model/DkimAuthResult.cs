@@ -20,7 +20,7 @@ using System.Xml.Linq;
 
 namespace DMARC.Shared.Model
 {
-    public class DkimAuthResult : DbModel
+    public class DkimAuthResult
     {
         public DkimAuthResult() {}
         
@@ -34,5 +34,29 @@ namespace DMARC.Shared.Model
         public virtual string Domain { get; set; }
         public virtual DkimResult Result { get; set; }
         public virtual string HumanResult { get; set; }
+
+        protected bool Equals(DkimAuthResult other)
+        {
+            return string.Equals(Domain, other.Domain) && Result == other.Result && string.Equals(HumanResult, other.HumanResult);
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (ReferenceEquals(null, obj)) return false;
+            if (ReferenceEquals(this, obj)) return true;
+            if (obj.GetType() != this.GetType()) return false;
+            return Equals((DkimAuthResult) obj);
+        }
+
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                var hashCode = (Domain != null ? Domain.GetHashCode() : 0);
+                hashCode = (hashCode * 397) ^ (int) Result;
+                hashCode = (hashCode * 397) ^ (HumanResult != null ? HumanResult.GetHashCode() : 0);
+                return hashCode;
+            }
+        }
     }
 }

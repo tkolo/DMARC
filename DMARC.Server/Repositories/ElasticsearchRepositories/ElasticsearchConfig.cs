@@ -1,6 +1,6 @@
 #region License
 // DMARC report aggregator
-// Copyright (C) 2018 Tomasz Kołosowski
+// Copyright (C) 2018 Tomasz Kolosowski
 // 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -16,19 +16,12 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #endregion
 
-using System.Xml.Linq;
+using System;
 
-namespace DMARC.Shared.Model
+namespace DMARC.Server.Repositories.ElasticsearchRepositories
 {
-    public class Row
+    public class ElasticsearchConfig
     {
-        public Row() { }
-        
-        public Row(XElement xRow)
-        {
-            
-        }
-
-        
+        public Uri Url { get; set; }
     }
 }

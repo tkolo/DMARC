@@ -20,7 +20,7 @@ using System.Xml.Linq;
 
 namespace DMARC.Shared.Model
 {
-    public class PolicyOverrideReason : DbModel
+    public class PolicyOverrideReason
     {
         public PolicyOverrideReason() {}
         
@@ -32,5 +32,26 @@ namespace DMARC.Shared.Model
 
         public PolicyOverride Type { get; set; }
         public string Comment { get; set; }
+
+        protected bool Equals(PolicyOverrideReason other)
+        {
+            return Type == other.Type && string.Equals(Comment, other.Comment);
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (ReferenceEquals(null, obj)) return false;
+            if (ReferenceEquals(this, obj)) return true;
+            if (obj.GetType() != this.GetType()) return false;
+            return Equals((PolicyOverrideReason) obj);
+        }
+
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                return ((int) Type * 397) ^ (Comment != null ? Comment.GetHashCode() : 0);
+            }
+        }
     }
 }

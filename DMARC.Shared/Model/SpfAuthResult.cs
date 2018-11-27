@@ -20,7 +20,7 @@ using System.Xml.Linq;
 
 namespace DMARC.Shared.Model
 {
-    public class SpfAuthResult : DbModel
+    public class SpfAuthResult
     {
         public SpfAuthResult() { }
         
@@ -32,5 +32,26 @@ namespace DMARC.Shared.Model
 
         public virtual string Domain { get; set; }
         public virtual SpfResult Result { get; set; }
+
+        protected bool Equals(SpfAuthResult other)
+        {
+            return string.Equals(Domain, other.Domain) && Result == other.Result;
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (ReferenceEquals(null, obj)) return false;
+            if (ReferenceEquals(this, obj)) return true;
+            if (obj.GetType() != this.GetType()) return false;
+            return Equals((SpfAuthResult) obj);
+        }
+
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                return ((Domain != null ? Domain.GetHashCode() : 0) * 397) ^ (int) Result;
+            }
+        }
     }
 }

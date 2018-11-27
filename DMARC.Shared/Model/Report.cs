@@ -1,4 +1,5 @@
 ﻿#region License
+
 // DMARC report aggregator
 // Copyright (C) 2018 Tomasz Kołosowski
 // 
@@ -14,6 +15,7 @@
 // 
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 #endregion
 
 using System;
@@ -23,25 +25,28 @@ using System.Xml.Linq;
 
 namespace DMARC.Shared.Model
 {
-    public class Report : DbModel
+    public class Report
     {
-        public Report() {}
-        
+        public Report()
+        {
+        }
+
         public Report(XElement feedback)
         {
             if (!string.Equals(feedback.Name.LocalName, "feedback", StringComparison.OrdinalIgnoreCase))
                 throw new InvalidDmarcReportFormatException();
 
-            
+
             // Report metadata
             var xReportMetadata = feedback.Element(@"report_metadata") ?? throw new InvalidDmarcReportFormatException();
-            
+
             ReportId = xReportMetadata.Element(@"report_id")?.Value ?? throw new InvalidDmarcReportFormatException();
-            OrganizationName = xReportMetadata.Element(@"org_name")?.Value ?? throw new InvalidDmarcReportFormatException();
+            OrganizationName = xReportMetadata.Element(@"org_name")?.Value ??
+                               throw new InvalidDmarcReportFormatException();
             Email = xReportMetadata.Element(@"email")?.Value ?? throw new InvalidDmarcReportFormatException();
             ExtraContactInfo = xReportMetadata.Element(@"extra_contact_info")?.Value;
             var xDateRange = xReportMetadata.Element(@"date_range") ?? throw new InvalidDmarcReportFormatException();
-            
+
             if (xDateRange == null)
                 throw new InvalidDmarcReportFormatException();
 
@@ -56,20 +61,32 @@ namespace DMARC.Shared.Model
                 throw new InvalidDmarcReportFormatException();
 
             End = DateTimeOffset.FromUnixTimeSeconds(lEnd);
-            
+
             Errors = string.Join(",", xReportMetadata.Elements(@"error").Select(x => x.Value));
-            
+
             // Policy published
             var xPolicyPublished =
                 feedback.Element(@"policy_published") ?? throw new InvalidDmarcReportFormatException();
-            
+
             Domain = xPolicyPublished.Element(@"domain")?.Value ?? throw new InvalidDmarcReportFormatException();
-            DkimAlignment = AlignmentParser.Parse(xPolicyPublished.Element(@"adkim") ?? throw new InvalidDmarcReportFormatException());
-            SpfAlignment = AlignmentParser.Parse(xPolicyPublished.Element(@"aspf") ?? throw new InvalidDmarcReportFormatException());
-            DomainPolicy = DispositionParser.Parse(xPolicyPublished.Element(@"p") ?? throw new InvalidDmarcReportFormatException());
-            SubdomainPolicy = DispositionParser.Parse(xPolicyPublished.Element(@"sp") ?? throw new InvalidDmarcReportFormatException());
-            Precent = int.TryParse(xPolicyPublished.Element(@"pct")?.Value ?? throw new InvalidDmarcReportFormatException(), out var iPercent) ? iPercent : throw new InvalidDmarcReportFormatException();
-            
+            DkimAlignment =
+                AlignmentParser.Parse(xPolicyPublished.Element(@"adkim") ??
+                                      throw new InvalidDmarcReportFormatException());
+            SpfAlignment =
+                AlignmentParser.Parse(
+                    xPolicyPublished.Element(@"aspf") ?? throw new InvalidDmarcReportFormatException());
+            DomainPolicy =
+                DispositionParser.Parse(xPolicyPublished.Element(@"p") ??
+                                        throw new InvalidDmarcReportFormatException());
+            SubdomainPolicy =
+                DispositionParser.Parse(
+                    xPolicyPublished.Element(@"sp") ?? throw new InvalidDmarcReportFormatException());
+            Precent = int.TryParse(
+                xPolicyPublished.Element(@"pct")?.Value ?? throw new InvalidDmarcReportFormatException(),
+                out var iPercent)
+                ? iPercent
+                : throw new InvalidDmarcReportFormatException();
+
             // Records;
             Records = feedback.Elements(@"record").Select(x => new Record(x)).ToList();
             //TODO: dodać sprawdzenie czy jest conajmniej 1 rekord
@@ -83,8 +100,8 @@ namespace DMARC.Shared.Model
         public virtual DateTimeOffset Begin { get; set; }
         public virtual DateTimeOffset End { get; set; }
         public virtual string Errors { get; set; }
-        
-        
+
+
         // Policy published
         public virtual string Domain { get; set; }
         public virtual Alignment DkimAlignment { get; set; }
@@ -92,7 +109,49 @@ namespace DMARC.Shared.Model
         public virtual Disposition DomainPolicy { get; set; }
         public virtual Disposition SubdomainPolicy { get; set; }
         public virtual int Precent { get; set; }
-        
+
         public virtual IReadOnlyList<Record> Records { get; set; }
+
+        protected bool Equals(Report other)
+        {
+            return string.Equals(ReportId, other.ReportId) && string.Equals(OrganizationName, other.OrganizationName) &&
+                   string.Equals(Email, other.Email) && string.Equals(ExtraContactInfo, other.ExtraContactInfo) &&
+                   Begin.Equals(other.Begin) && End.Equals(other.End) && string.Equals(Errors, other.Errors) &&
+                   string.Equals(Domain, other.Domain) && DkimAlignment == other.DkimAlignment &&
+                   SpfAlignment == other.SpfAlignment && DomainPolicy == other.DomainPolicy &&
+                   SubdomainPolicy == other.SubdomainPolicy && Precent == other.Precent &&
+                   Records.SequenceEqual(other.Records);
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (ReferenceEquals(null, obj)) return false;
+            if (ReferenceEquals(this, obj)) return true;
+            if (obj.GetType() != this.GetType()) return false;
+            return Equals((Report) obj);
+        }
+
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                var hashCode = (ReportId != null ? ReportId.GetHashCode() : 0);
+                hashCode = (hashCode * 397) ^ (OrganizationName != null ? OrganizationName.GetHashCode() : 0);
+                hashCode = (hashCode * 397) ^ (Email != null ? Email.GetHashCode() : 0);
+                hashCode = (hashCode * 397) ^ (ExtraContactInfo != null ? ExtraContactInfo.GetHashCode() : 0);
+                hashCode = (hashCode * 397) ^ Begin.GetHashCode();
+                hashCode = (hashCode * 397) ^ End.GetHashCode();
+                hashCode = (hashCode * 397) ^ (Errors != null ? Errors.GetHashCode() : 0);
+                hashCode = (hashCode * 397) ^ (Domain != null ? Domain.GetHashCode() : 0);
+                hashCode = (hashCode * 397) ^ (int) DkimAlignment;
+                hashCode = (hashCode * 397) ^ (int) SpfAlignment;
+                hashCode = (hashCode * 397) ^ (int) DomainPolicy;
+                hashCode = (hashCode * 397) ^ (int) SubdomainPolicy;
+                hashCode = (hashCode * 397) ^ Precent;
+                if (Records != null)
+                    hashCode = Records.Aggregate(hashCode, (current, record) => (current * 397) ^ record.GetHashCode());
+                return hashCode;
+            }
+        }
     }
 }

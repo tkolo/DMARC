@@ -13,6 +13,8 @@
         <PackageReference Include="Microsoft.AspNetCore.Razor.Design" Version="2.1.2"/>
         <PackageReference Include="Microsoft.Extensions.CommandLineUtils" Version="1.1.1"/>
         <PackageReference Include="MimeKit" Version="2.0.7"/>
+        <PackageReference Include="NEST" Version="6.4.0"/>
+        <PackageReference Include="Newtonsoft.Json" Version="11.0.2"/>
     </ItemGroup>
 
     <ItemGroup>

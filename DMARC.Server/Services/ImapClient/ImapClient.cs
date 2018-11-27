@@ -1,4 +1,5 @@
 #region License
+
 // DMARC report aggregator
 // Copyright (C) 2018 Tomasz Kołosowski
 // 
@@ -14,9 +15,11 @@
 // 
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 #endregion
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -32,15 +35,19 @@ namespace DMARC.Server.Services.ImapClient
     {
         private readonly IOptionsMonitor<ImapClientOptions> _options;
         private readonly IReportRepository _reportRepository;
+        private readonly DynamicSettings.DynamicSettings _dynamicSettings;
         private readonly IDisposable _reloader;
         private MailKit.Net.Imap.ImapClient _client;
         private CancellationTokenSource _tokenSource = new CancellationTokenSource();
         private Task _currentTask;
 
-        public ImapClient(IOptionsMonitor<ImapClientOptions> options, IReportRepository reportRepository)
+        public ImapClient(IOptionsMonitor<ImapClientOptions> options,
+            IReportRepository reportRepository,
+            DynamicSettings.DynamicSettings dynamicSettings)
         {
             _options = options;
             _reportRepository = reportRepository;
+            _dynamicSettings = dynamicSettings;
             _reloader = _options.OnChange(OnOptionsChange);
         }
 
@@ -50,7 +57,7 @@ namespace DMARC.Server.Services.ImapClient
         }
 
         public async Task StartInternal()
-        {   
+        {
             int port;
             SecureSocketOptions socketOptions;
             var options = _options.CurrentValue;
@@ -60,7 +67,7 @@ namespace DMARC.Server.Services.ImapClient
                 _currentTask = null;
                 return;
             }
-            
+
             switch (options.Protocol)
             {
                 case ImapProtocol.Auto:
@@ -93,8 +100,20 @@ namespace DMARC.Server.Services.ImapClient
             }
 
             await _client.Inbox.OpenAsync(FolderAccess.ReadOnly, cancellationToken);
-            var uids = await _client.Inbox.SearchAsync(SearchQuery.All, cancellationToken);
+
+            IList<UniqueId> uids;
+            if (_dynamicSettings.LastIndexedReportUid != 0)
+            {
+                var uid = new UniqueId(_dynamicSettings.LastIndexedReportUid + 1);
+                var uidRange = new UniqueIdRange(uid, UniqueId.MaxValue);
+                uids = await _client.Inbox.SearchAsync(uidRange, SearchQuery.All, cancellationToken);
+            }
+            else
+            {
+                uids = await _client.Inbox.SearchAsync(SearchQuery.All, cancellationToken);
+            }
             
+
             foreach (var uid in uids)
             {
                 var message = await _client.Inbox.GetMessageAsync(uid, cancellationToken);
@@ -103,6 +122,7 @@ namespace DMARC.Server.Services.ImapClient
                     await _reportRepository.AddReportAsync(report);
                 }
             }
+            _dynamicSettings.LastIndexedReportUid = uids.LastOrDefault().Id;
         }
 
         private void OnOptionsChange(ImapClientOptions newOptions, string arg2)

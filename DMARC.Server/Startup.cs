@@ -27,7 +27,9 @@ using Newtonsoft.Json.Serialization;
 using System.Linq;
 using System.Net.Mime;
 using DMARC.Server.Repositories;
+using DMARC.Server.Repositories.ElasticsearchRepositories;
 using DMARC.Server.Repositories.InMemoryRepositories;
+using DMARC.Server.Services.DynamicSettings;
 using DMARC.Server.Services.ImapClient;
 using Microsoft.Extensions.Configuration;
 
@@ -61,11 +63,14 @@ namespace DMARC.Server
 
             // configurations
             services.Configure<ImapClientOptions>(Configuration.GetSection("ImapClient"));
+            services.Configure<ElasticsearchConfig>(Configuration.GetSection("ElasticsearchConfig"));
+            services.Configure<DynamicSettingsOptions>(Configuration.GetSection("DynamicSettings"));
 
             //repositories
-            services.AddScoped<IReportRepository, ReportInMemoryRepository>();
+            services.AddScoped<IReportRepository, ElasticsearchReportRepository>();
 
             // other services
+            services.AddSingleton<DynamicSettings, DynamicSettings>();
             services.AddScoped<IImapClient, ImapClient>();
         }
 

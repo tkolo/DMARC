@@ -56,10 +56,8 @@ namespace DMARC.Server.Services.ImapClient
             _currentTask = StartInternal();
         }
 
-        public async Task StartInternal()
+        private async Task StartInternal()
         {
-            int port;
-            SecureSocketOptions socketOptions;
             var options = _options.CurrentValue;
 
             if (string.IsNullOrEmpty(options.Server))
@@ -68,6 +66,17 @@ namespace DMARC.Server.Services.ImapClient
                 return;
             }
 
+            var cancellationToken = _tokenSource.Token;
+            await Connect(cancellationToken);
+            await FetchNewReports(cancellationToken);
+            await ListenForNewReports(cancellationToken);
+        }
+
+        private async Task Connect(CancellationToken cancellationToken)
+        {
+            var options = _options.CurrentValue;
+            int port;
+            SecureSocketOptions socketOptions;
             switch (options.Protocol)
             {
                 case ImapProtocol.Auto:
@@ -90,8 +99,6 @@ namespace DMARC.Server.Services.ImapClient
                     throw new ArgumentOutOfRangeException();
             }
 
-            var cancellationToken = _tokenSource.Token;
-
             _client = new MailKit.Net.Imap.ImapClient();
             await _client.ConnectAsync(options.Server, port, socketOptions, cancellationToken);
             if (!string.IsNullOrEmpty(options.Username))
@@ -100,7 +107,10 @@ namespace DMARC.Server.Services.ImapClient
             }
 
             await _client.Inbox.OpenAsync(FolderAccess.ReadOnly, cancellationToken);
-
+        }
+        
+        private async Task FetchNewReports(CancellationToken cancellationToken)
+        {
             IList<UniqueId> uids;
             if (_dynamicSettings.LastIndexedReportUid != 0)
             {
@@ -112,7 +122,7 @@ namespace DMARC.Server.Services.ImapClient
             {
                 uids = await _client.Inbox.SearchAsync(SearchQuery.All, cancellationToken);
             }
-            
+
 
             foreach (var uid in uids)
             {
@@ -122,7 +132,17 @@ namespace DMARC.Server.Services.ImapClient
                     await _reportRepository.AddReportAsync(report);
                 }
             }
+
             _dynamicSettings.LastIndexedReportUid = uids.LastOrDefault().Id;
+        }
+        
+        private async Task ListenForNewReports(CancellationToken cancellationToken)
+        {
+            while (!cancellationToken.IsCancellationRequested)
+            {
+                await _client.IdleAsync(cancellationToken, cancellationToken);
+                await FetchNewReports(cancellationToken);
+            }
         }
 
         private void OnOptionsChange(ImapClientOptions newOptions, string arg2)

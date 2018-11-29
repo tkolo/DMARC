@@ -18,7 +18,9 @@
 
 #endregion
 
+using DMARC.Server.Services.ImapClient;
 using DMARC.Shared.Model;
+using DMARC.Shared.Model.Report;
 using Microsoft.Extensions.Options;
 using Nest;
 
@@ -36,10 +38,10 @@ namespace DMARC.Server.Repositories.ElasticsearchRepositories
 
             Client = new ElasticClient(connectionConfiguration);
             
-            InitializeIndex();
+            InitializeIndexes();
         }
 
-        private void InitializeIndex()
+        private void InitializeIndexes()
         {
             if (!Client.IndexExists("reports").Exists)
             {
@@ -49,6 +51,13 @@ namespace DMARC.Server.Repositories.ElasticsearchRepositories
                             .AutoMap<DkimAuthResult>()
                             .AutoMap<PolicyOverrideReason>()
                             .AutoMap<Record>())));
+            }
+
+            if (!Client.IndexExists("imapsettings").Exists)
+            {
+                Client.CreateIndex("imapsettings", c => c
+                    .Mappings(ms => ms
+                        .Map<ImapClientDynamicSettings>(m => m.AutoMap())));
             }
         }
     }

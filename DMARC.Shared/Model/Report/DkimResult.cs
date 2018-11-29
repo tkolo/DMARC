@@ -19,29 +19,31 @@
 using System;
 using System.Xml.Linq;
 
-namespace DMARC.Shared.Model
+namespace DMARC.Shared.Model.Report
 {
-    public enum Alignment
+    public enum DkimResult
     {
-        Relaxed,
-        Strict
+        None,
+        Pass,
+        Fail,
+        Policy,
+        Neutral,
+        TempError,
+        PermError
     }
 
-    public static class AlignmentParser
+    public static class DkimResultParser
     {
-        public static Alignment Parse(XElement xAligment)
+        public static DkimResult Parse(XElement xDkimResult)
         {
-            if (xAligment == null)
+            if (xDkimResult == null)
                 throw new InvalidDmarcReportFormatException();
 
-            if (string.IsNullOrWhiteSpace(xAligment.Value))
-                return Alignment.Relaxed;
+            if (string.IsNullOrWhiteSpace(xDkimResult.Value))
+                return DkimResult.None;
 
-            if (string.Equals(xAligment.Value, @"r", StringComparison.OrdinalIgnoreCase))
-                return Alignment.Relaxed;
-
-            if (string.Equals(xAligment.Value, @"s", StringComparison.OrdinalIgnoreCase))
-                return Alignment.Strict;
+            if (Enum.TryParse(xDkimResult.Value, true, out DkimResult dkimResult))
+                return dkimResult;
 
             throw new InvalidDmarcReportFormatException();
         }

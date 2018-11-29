@@ -19,23 +19,33 @@
 using System;
 using System.Xml.Linq;
 
-namespace DMARC.Shared.Model
+namespace DMARC.Shared.Model.Report
 {
-    public enum DmarcResult
+    public enum SpfResult
     {
+        None,
+        Neutral,
         Pass,
-        Fail
+        Fail,
+        SoftFail,
+        TempError,
+        Unknown = TempError,
+        PermError,
+        Error = PermError
     }
 
-    public static class DmarcResultParser
+    public static class SpfResultParser
     {
-        public static DmarcResult Parse(XElement xDmarcResult)
+        public static SpfResult Parse(XElement xSpfResult)
         {
-            if (xDmarcResult == null)
+            if (xSpfResult == null)
                 throw new InvalidDmarcReportFormatException();
 
-            if (Enum.TryParse(xDmarcResult.Value, true, out DmarcResult dmarcResult))
-                return dmarcResult;
+            if (string.IsNullOrWhiteSpace(xSpfResult.Value))
+                return SpfResult.None;
+
+            if (Enum.TryParse(xSpfResult.Value, true, out SpfResult spfResult))
+                return spfResult;
 
             throw new InvalidDmarcReportFormatException();
         }

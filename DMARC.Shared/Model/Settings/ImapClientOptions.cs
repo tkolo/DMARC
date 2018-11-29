@@ -17,34 +17,25 @@
 #endregion
 
 using System.Collections.Generic;
-using System.Threading.Tasks;
-using DMARC.Shared.Model;
+using System.Runtime.CompilerServices;
 
-namespace DMARC.Server.Repositories.InMemoryRepositories
+namespace DMARC.Shared.Model.Settings
 {
-    public class ReportInMemoryRepository : IReportRepository
+    public class ImapClientOptions
     {
-        private static readonly List<Report> Reports = new List<Report>();
+        public string Id { get; set; }
+        public string Server { get; set; }
+        public ImapProtocol Protocol { get; set; }
+        public string Username { get; set; }
+        public string Password { get; set; }
+        public List<string> LocalDomains { get; set; } = new List<string>();
+    }
 
-        public Task AddReportAsync(Report report)
-        {
-            lock (Reports)
-            {
-                Reports.Add(report);
-            }
-
-            return Task.CompletedTask;
-        }
-
-        public Task<IEnumerable<Report>> GetAllReportsAsync()
-        {
-            List<Report> copy;
-            lock (Reports)
-            {
-                copy = new List<Report>(Reports);
-            }
-
-            return Task.FromResult((IEnumerable<Report>) copy);
-        }
+    public enum ImapProtocol
+    {
+        Auto,
+        Imap,
+        Imaps,
+        ImapStartTls
     }
 }

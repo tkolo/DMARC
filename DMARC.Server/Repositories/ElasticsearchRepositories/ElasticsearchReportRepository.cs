@@ -20,9 +20,9 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using DMARC.Shared.Model;
+using DMARC.Shared.Model.Report;
 using Microsoft.Extensions.Options;
 using Nest;
 
@@ -46,13 +46,13 @@ namespace DMARC.Server.Repositories.ElasticsearchRepositories
             }
             else
             {
-                Client.Index(report, x => x.Index("reports").Id(report.ReportId));
+                await Client.IndexAsync(report, x => x.Index("reports").Id(report.ReportId));
             }
         }
 
         public async Task<IEnumerable<Report>> GetAllReportsAsync()
         {
-            return (await Client.SearchAsync<Report>()).Documents;
+            return (await Client.SearchAsync<Report>(x => x.Size(1000))).Documents;
         }
     }
 }

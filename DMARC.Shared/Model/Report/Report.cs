@@ -23,7 +23,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Xml.Linq;
 
-namespace DMARC.Shared.Model
+namespace DMARC.Shared.Model.Report
 {
     public class Report
     {
@@ -109,6 +109,8 @@ namespace DMARC.Shared.Model
         public virtual Disposition DomainPolicy { get; set; }
         public virtual Disposition SubdomainPolicy { get; set; }
         public virtual int Precent { get; set; }
+        public string ServerId { get; set; }
+        public bool Incoming { get; set; }
 
         public virtual IReadOnlyList<Record> Records { get; set; }
 

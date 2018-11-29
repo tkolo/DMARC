@@ -19,31 +19,27 @@
 using System;
 using System.Xml.Linq;
 
-namespace DMARC.Shared.Model
+namespace DMARC.Shared.Model.Report
 {
-    public enum DkimResult
+    public enum Disposition
     {
         None,
-        Pass,
-        Fail,
-        Policy,
-        Neutral,
-        TempError,
-        PermError
+        Quarantine,
+        Reject
     }
 
-    public static class DkimResultParser
+    public static class DispositionParser
     {
-        public static DkimResult Parse(XElement xDkimResult)
+        public static Disposition Parse(XElement xDisposition)
         {
-            if (xDkimResult == null)
+            if (xDisposition == null)
                 throw new InvalidDmarcReportFormatException();
 
-            if (string.IsNullOrWhiteSpace(xDkimResult.Value))
-                return DkimResult.None;
+            if (string.IsNullOrWhiteSpace(xDisposition.Value))
+                return Disposition.None;
 
-            if (Enum.TryParse(xDkimResult.Value, true, out DkimResult dkimResult))
-                return dkimResult;
+            if (Enum.TryParse(xDisposition.Value, true, out Disposition disposition))
+                return disposition;
 
             throw new InvalidDmarcReportFormatException();
         }

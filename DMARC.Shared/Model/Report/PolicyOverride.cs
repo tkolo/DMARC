@@ -19,7 +19,7 @@
 using System;
 using System.Xml.Linq;
 
-namespace DMARC.Shared.Model
+namespace DMARC.Shared.Model.Report
 {
     public enum PolicyOverride
     {

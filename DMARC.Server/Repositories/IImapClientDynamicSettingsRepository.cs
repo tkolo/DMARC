@@ -1,6 +1,7 @@
 #region License
+
 // DMARC report aggregator
-// Copyright (C) 2018 Tomasz Kołosowski
+// Copyright (C) 2018 Tomasz Kolosowski
 // 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -14,34 +15,21 @@
 // 
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 #endregion
 
-using System;
-using System.Xml.Linq;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using DMARC.Server.Services.ImapClient;
 
-namespace DMARC.Shared.Model
+namespace DMARC.Server.Repositories
 {
-    public enum Disposition
+    public interface IImapClientDynamicSettingsRepository
     {
-        None,
-        Quarantine,
-        Reject
-    }
+        Task<IEnumerable<ImapClientDynamicSettings>> GetAllAsync();
+        
+        Task<ImapClientDynamicSettings> GetAsync(string clientId);
 
-    public static class DispositionParser
-    {
-        public static Disposition Parse(XElement xDisposition)
-        {
-            if (xDisposition == null)
-                throw new InvalidDmarcReportFormatException();
-
-            if (string.IsNullOrWhiteSpace(xDisposition.Value))
-                return Disposition.None;
-
-            if (Enum.TryParse(xDisposition.Value, true, out Disposition disposition))
-                return disposition;
-
-            throw new InvalidDmarcReportFormatException();
-        }
+        Task SaveAsync(ImapClientDynamicSettings settings);
     }
 }

@@ -23,6 +23,7 @@ using System.IO.Compression;
 using System.Linq;
 using System.Xml.Linq;
 using DMARC.Shared.Model;
+using DMARC.Shared.Model.Report;
 using MimeKit;
 
 namespace DMARC.Server

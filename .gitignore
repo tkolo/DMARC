@@ -336,4 +336,4 @@ ASALocalRun/
 !.vscode/launch.json
 !.vscode/extensions.json
 
-dynamicsettings.json
+appsettings.runtime.json

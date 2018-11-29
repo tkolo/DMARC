@@ -17,14 +17,33 @@
 #endregion
 
 using System;
-using System.Threading.Tasks;
-using DMARC.Shared.Model.Settings;
+using System.Xml.Linq;
 
-namespace DMARC.Server.Services.ImapClient
+namespace DMARC.Shared.Model.Report
 {
-    public interface IImapClient : IDisposable
+    public enum Alignment
     {
-        void Start(ImapClientOptions options);
-        Task Stop();
+        Relaxed,
+        Strict
+    }
+
+    public static class AlignmentParser
+    {
+        public static Alignment Parse(XElement xAligment)
+        {
+            if (xAligment == null)
+                throw new InvalidDmarcReportFormatException();
+
+            if (string.IsNullOrWhiteSpace(xAligment.Value))
+                return Alignment.Relaxed;
+
+            if (string.Equals(xAligment.Value, @"r", StringComparison.OrdinalIgnoreCase))
+                return Alignment.Relaxed;
+
+            if (string.Equals(xAligment.Value, @"s", StringComparison.OrdinalIgnoreCase))
+                return Alignment.Strict;
+
+            throw new InvalidDmarcReportFormatException();
+        }
     }
 }

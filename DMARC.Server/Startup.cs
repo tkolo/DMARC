@@ -1,4 +1,5 @@
 #region License
+
 // DMARC report aggregator
 // Copyright (C) 2018 Tomasz Kołosowski
 // 
@@ -14,23 +15,23 @@
 // 
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 #endregion
 
-using System.ComponentModel;
-using System.ComponentModel.Design;
+using System;
+using System.Collections.Generic;
 using Microsoft.AspNetCore.Blazor.Server;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.Extensions.DependencyInjection;
-using Newtonsoft.Json.Serialization;
 using System.Linq;
 using System.Net.Mime;
 using DMARC.Server.Repositories;
 using DMARC.Server.Repositories.ElasticsearchRepositories;
-using DMARC.Server.Repositories.InMemoryRepositories;
-using DMARC.Server.Services.DynamicSettings;
 using DMARC.Server.Services.ImapClient;
+using DMARC.Server.Services.WritableOptions;
+using DMARC.Shared.Model.Settings;
 using Microsoft.Extensions.Configuration;
 
 namespace DMARC.Server
@@ -62,20 +63,23 @@ namespace DMARC.Server
             });
 
             // configurations
-            services.Configure<ImapClientOptions>(Configuration.GetSection("ImapClient"));
-            services.Configure<ElasticsearchConfig>(Configuration.GetSection("ElasticsearchConfig"));
-            services.Configure<DynamicSettingsOptions>(Configuration.GetSection("DynamicSettings"));
+            services.ConfigureWritable<List<ImapClientOptions>>(Configuration.GetSection("ImapClients"),
+                Program.WritableFileName);
+            services.ConfigureWritable<ElasticsearchConfig>(Configuration.GetSection("ElasticsearchConfig"),
+                Program.WritableFileName);
 
             //repositories
             services.AddScoped<IReportRepository, ElasticsearchReportRepository>();
+            services
+                .AddScoped<IImapClientDynamicSettingsRepository, ElasticsearchImapClientDynamicSettingsRepository>();
 
             // other services
-            services.AddSingleton<DynamicSettings, DynamicSettings>();
             services.AddScoped<IImapClient, ImapClient>();
+            services.AddSingleton<IImapClientManager, ImapClientManager>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env, IServiceScopeFactory scopeFactory)
+        public void Configure(IApplicationBuilder app, IHostingEnvironment env, IServiceProvider serviceProvider)
         {
             app.UseResponseCompression();
 
@@ -87,8 +91,8 @@ namespace DMARC.Server
             app.UseMvc(routes => { routes.MapRoute(name: "default", template: "{controller}/{action}/{id?}"); });
 
             app.UseBlazor<Client.Startup>();
-
-            scopeFactory.CreateScope().ServiceProvider.GetService<IImapClient>().Start();
+            
+            serviceProvider.GetService<IImapClientManager>().Start();
         }
     }
 }

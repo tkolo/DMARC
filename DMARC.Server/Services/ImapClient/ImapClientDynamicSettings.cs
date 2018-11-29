@@ -1,6 +1,7 @@
 #region License
+
 // DMARC report aggregator
-// Copyright (C) 2018 Tomasz Kołosowski
+// Copyright (C) 2018 Tomasz Kolosowski
 // 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -14,17 +15,14 @@
 // 
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
-#endregion
 
-using System;
-using System.Threading.Tasks;
-using DMARC.Shared.Model.Settings;
+#endregion
 
 namespace DMARC.Server.Services.ImapClient
 {
-    public interface IImapClient : IDisposable
+    public class ImapClientDynamicSettings
     {
-        void Start(ImapClientOptions options);
-        Task Stop();
+        public string ClientId { get; set; }
+        public uint LastReportedUid { get; set; }
     }
 }

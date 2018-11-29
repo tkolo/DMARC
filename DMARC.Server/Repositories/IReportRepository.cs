@@ -19,6 +19,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using DMARC.Shared.Model;
+using DMARC.Shared.Model.Report;
 
 namespace DMARC.Server.Repositories
 {

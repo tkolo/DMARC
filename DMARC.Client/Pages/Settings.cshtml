@@ -1,0 +1,132 @@
+@page "/settings"
+@using DMARC.Shared.Model.Settings
+@inject HttpClient Http
+
+<div class="row @(Loading ? "d-none" : "")">
+    @{
+        var i = 0;
+        var disableRemove = (Options?.Count ?? 0) == 1;
+    }
+    @foreach (var options in Options ?? Enumerable.Empty<ImapClientOptions>())
+    {
+        var localIndex = i;
+        <div class="col-md-4 col-lg-2 bg-light m-1 p-2 border">
+            <form>
+                <div class="form-group">
+                    <label for="serverId">Id</label>
+                    <input type="text" class="form-control" id="serverId" placeholder="Server id" readonly="readonly" bind="@options.Id" />
+                </div>
+                <div class="form-group">
+                    <label for="server">Server</label>
+                    <input type="text" class="form-control" id="server" placeholder="Server" bind="@options.Server" />
+                </div>
+                <div class="form-group">
+                    <label for="protocol">Protocol</label>
+                    <select class="form-control" id="protocol" bind="@options.Protocol">
+                        <option value=@ImapProtocol.Auto>@ImapProtocol.Auto.ToString()</option>
+                        <option value=@ImapProtocol.Imap>@ImapProtocol.Imap.ToString()</option>
+                        <option vaot.tlue=@ImapProtocol.Imaps>@ImapProtocol.Imaps.ToString()</option>
+                        <option value=@ImapProtocol.ImapStartTls>@ImapProtocol.ImapStartTls.ToString()</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" class="form-control" id="username" placeholder="Username" bind="@options.Username" />
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" class="form-control" id="password" placeholder="Password" bind="@options.Password" />
+                </div>
+                
+                <div class="form-group">
+                    <label for="localDomains">LocalDomains</label>
+                    <div id="localDomains">
+                        @{ var j = 0;}
+                        @foreach (var localDomain in options.LocalDomains)
+                        {
+                            var localDomainIndex = j;
+                            <div class="input-group mb-1">
+                                <input type="text" class="form-control" placeholder="Domain" bind="@options.LocalDomains[localDomainIndex]"/>
+                                <div class="input-group-append">
+                                    <button class="btn btn-danger" type="button" onclick=@{() => RemoveLocalDomain(localIndex, localDomainIndex)}>
+                                        <span class="oi oi-trash" aria-hidden="true"></span>
+                                    </button>
+                                </div>
+                            </div>
+                            j++;
+                        }
+                        <button class="btn btn-success" type="button" onclick=@{() => AddNewLocalDomain(localIndex)}>Add new</button>
+                    </div>
+                </div>
+                
+                <button type="button" class="btn btn-danger" disabled=@disableRemove onclick=@{() => RemoveServer(localIndex)}>Remove</button>
+            </form>
+        </div>
+        i++;
+    }
+    <div class="col-md-4 col-lg-2 m-1 p-2 bg-light border d-flex justify-content-center align-items-center">
+        <button type="button" class="btn btn-primary" onclick=@AddNewServer>
+            <span class="oi oi-plus" aria-hidden="true"></span> Add new
+        </button>
+    </div>
+</div>
+<div class="row">
+    <div class="col-12 mt-2">
+        <button type="submit" disabled=@Loading class="btn btn-primary btn-lg" onclick="@Submit">Submit</button>
+    </div>
+</div>
+
+@functions
+{
+    public bool Loading { get; set; }
+    private List<ImapClientOptions> Options { get; set; }
+
+    protected override async Task OnInitAsync()
+    {
+        Loading = true;
+        try
+        {
+            Options = await Http.GetJsonAsync<List<ImapClientOptions>>("api/Settings");
+            if (Options.Count == 0)
+                AddNewServer();
+        }
+        finally
+        {
+            Loading = false;
+        }
+    }
+
+    private void AddNewServer()
+    {
+        Options.Add(new ImapClientOptions());
+    }
+
+    private void RemoveServer(int index)
+    {
+        Options.RemoveAt(index);
+    }
+
+    private async Task Submit()
+    {
+        Loading = true;
+        try
+        {
+            await Http.PostJsonAsync("api/Settings", Options);
+        }
+        finally
+        {
+            Loading = false;
+        }
+    }
+
+    private void RemoveLocalDomain(int localIndex, int localDomainIndex)
+    {
+        Options[localIndex].LocalDomains.RemoveAt(localDomainIndex);
+    }
+
+    private void AddNewLocalDomain(int localIndex)
+    {
+        Options[localIndex].LocalDomains.Add("");
+    }
+
+}

@@ -27,6 +27,8 @@ namespace DMARC.Server
 {
     public class Program
     {
+        public const string WritableFileName = "appsettings.runtime.json";
+        
         private const string HelpTemplate = "-h|--help";
 
         public static int Main(string[] args)
@@ -83,7 +85,8 @@ namespace DMARC.Server
                             true,
                             true)
                         .AddUserSecrets<Startup>()
-                        .AddEnvironmentVariables();
+                        .AddEnvironmentVariables()
+                        .AddJsonFile(WritableFileName, true, true);
 
                     if (args != null)
                         config.AddCommandLine(args);

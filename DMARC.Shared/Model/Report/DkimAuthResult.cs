@@ -18,24 +18,26 @@
 
 using System.Xml.Linq;
 
-namespace DMARC.Shared.Model
+namespace DMARC.Shared.Model.Report
 {
-    public class PolicyOverrideReason
+    public class DkimAuthResult
     {
-        public PolicyOverrideReason() {}
+        public DkimAuthResult() {}
         
-        public PolicyOverrideReason(XElement xPolicyOverrideReason)
+        public DkimAuthResult(XElement xDkimAuthResult)
         {
-            Type = PolicyOverrideParser.Parse(xPolicyOverrideReason.Element(@"type") ?? throw new InvalidDmarcReportFormatException());
-            Comment = xPolicyOverrideReason.Element(@"comment")?.Value;
+            Domain = xDkimAuthResult.Element(@"domain")?.Value ?? throw new InvalidDmarcReportFormatException();
+            Result = DkimResultParser.Parse(xDkimAuthResult.Element(@"result") ?? throw new InvalidDmarcReportFormatException());
+            HumanResult = xDkimAuthResult.Element(@"human_result")?.Value;
         }
 
-        public PolicyOverride Type { get; set; }
-        public string Comment { get; set; }
+        public virtual string Domain { get; set; }
+        public virtual DkimResult Result { get; set; }
+        public virtual string HumanResult { get; set; }
 
-        protected bool Equals(PolicyOverrideReason other)
+        protected bool Equals(DkimAuthResult other)
         {
-            return Type == other.Type && string.Equals(Comment, other.Comment);
+            return string.Equals(Domain, other.Domain) && Result == other.Result && string.Equals(HumanResult, other.HumanResult);
         }
 
         public override bool Equals(object obj)
@@ -43,14 +45,17 @@ namespace DMARC.Shared.Model
             if (ReferenceEquals(null, obj)) return false;
             if (ReferenceEquals(this, obj)) return true;
             if (obj.GetType() != this.GetType()) return false;
-            return Equals((PolicyOverrideReason) obj);
+            return Equals((DkimAuthResult) obj);
         }
 
         public override int GetHashCode()
         {
             unchecked
             {
-                return ((int) Type * 397) ^ (Comment != null ? Comment.GetHashCode() : 0);
+                var hashCode = (Domain != null ? Domain.GetHashCode() : 0);
+                hashCode = (hashCode * 397) ^ (int) Result;
+                hashCode = (hashCode * 397) ^ (HumanResult != null ? HumanResult.GetHashCode() : 0);
+                return hashCode;
             }
         }
     }

@@ -1,0 +1,178 @@
+﻿@using DMARC.Client.Helpers
+@using DMARC.Shared.Dto
+@using DMARC.Shared.Model.Report
+@using Microsoft.AspNetCore.Blazor.Services
+@page "/"
+@page "/reports"
+@inject HttpClient Http
+@inject IUriHelper UriHelper
+
+<h1>DMARC reports</h1>
+
+@if (Response == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <table class="table">
+        <thead>
+        <tr>
+            <th>Id</th>
+            <th>Domain</th>
+            <th>SPF</th>
+            <th>DKIM</th>
+            <th>Begin</th>
+            <th>End</th>
+        </tr>
+        </thead>
+        <tbody>
+        @foreach (var report in Response.Reports)
+        {
+            <tr>
+                <td>
+                    <NavLink class="nav-link" href="@($"report/{report.ReportId}")">
+                        @report.ReportId
+                    </NavLink>                    
+                </td>
+                <td>@report.Domain</td>
+                @if (report.Records != null && report.Records.Any(x => x.Spf == DmarcResult.Fail))
+                {
+                    <td>Fail</td>
+                }
+                else
+                {
+                    <td>Pass</td>
+                }
+                @if (report.Records != null && report.Records.Any(x => x.Dkim == DmarcResult.Fail))
+                {
+                    <td>Fail</td>
+                }
+                else
+                {
+                    <td>Pass</td>
+                }
+                <td>@report.Begin.Date.ToString("yyyy-MM-dd")</td>
+                <td>@report.End.Date.ToString("yyyy-MM-dd")</td>
+            </tr>
+        }
+        </tbody>
+    </table>
+    
+    <nav>
+        <div class="row">
+            <div class="col">
+                <form class="form-inline">
+                    <select class="form-control" onchange=@ChangePageSize>
+                        <option value="10">10</option>
+                        <option value="20">20</option>
+                        <option value="30">30</option>
+                        <option value="50" selected="selected">50</option>
+                        <option value="100">100</option>
+                        <option value="200">200</option>
+                        <option value="500">500</option>
+                        <option value="1000">1000</option>
+                    </select>
+                </form>
+            </div>
+            <div class="col">
+                <form class="form-inline">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="onlyFailedCheck" onchange="@ChangeFailed" />
+                        <label class="form-check-label" for="onlyFailedCheck">
+                            Only failed
+                        </label>
+                    </div>
+                    <select class="form-control" onchange=@ChangeDirection>
+                        <option value="@Direction.Both">@Direction.Both.ToString()</option>
+                        <option value="@Direction.Incoming">@Direction.Incoming.ToString()</option>
+                        <option value="@Direction.Outgoing">@Direction.Outgoing.ToString()</option>
+                    </select>
+                </form>
+            </div>
+            <div class="col">
+                <ul class="pagination">
+                    <li class="page-item @(CurrentPage <= 1 ? "disabled" : "")">
+                        <a class="page-link" href="#" tabindex="-1">Previous</a>
+                    </li>
+                    @for (var i = 1; i <= TotalPages; i++)
+                    {
+                        var localIndex = i;
+                        if (i == CurrentPage)
+                        {
+                            <li class="page-item active">
+                                <a class="page-link" href="javascript:void(0)" onclick="@{() => GoToPage(localIndex)}">@i <span class="sr-only">(current)</span></a>
+                            </li>
+                        }
+                        else
+                        {
+                            <li class="page-item"><a class="page-link" href="javascript:void(0)" onclick="@{() => GoToPage(localIndex)}">@i</a></li>
+                        }
+                    }
+                    <li class="page-item @(CurrentPage >= TotalPages ? "disabled" : "")">
+                        <a class="page-link" href="#">Next</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+}
+
+@functions {
+    private ReportsPageResponse Response { get; set; }
+
+    private int PageSize { get; set; } = 50;
+
+    private int CurrentPage { get; set; } = 1;
+
+    private int TotalRecords => Response?.Count ?? 0; 
+
+    private int TotalPages => (int) Math.Ceiling(((double) TotalRecords) / PageSize);
+
+    private bool OnlyFailed { get; set; }
+    
+    private Direction Direction { get; set; }
+
+    protected override async Task OnInitAsync()
+    {
+        UriHelper.NavigateTo("/reports");
+        await FetchRecords();
+    }
+
+    private async Task FetchRecords()
+    {
+        var request = new ReportsPageRequest
+        {
+            PageNum = CurrentPage,
+            PageSize = PageSize,
+            OnlyFailed = OnlyFailed,
+            Direction = Direction
+        };
+        Response = await Http.GetJsonAsync<ReportsPageResponse>($"api/Report?{request.ToQueryString()}");
+    }
+
+    private async Task GoToPage(int index)
+    {
+        CurrentPage = Math.Min(TotalPages, Math.Max(1, index));
+        await FetchRecords();
+    }
+
+    private async Task ChangePageSize(UIChangeEventArgs eventArgs)
+    {
+        var newSize = Math.Max(10, int.Parse((string) eventArgs.Value));
+        PageSize = newSize;
+        await FetchRecords();
+    }
+
+    private async Task ChangeFailed(UIChangeEventArgs eventArgs)
+    {
+        OnlyFailed = (bool) eventArgs.Value;
+        await FetchRecords();
+    }
+    
+    private async Task ChangeDirection(UIChangeEventArgs eventArgs)
+    {
+        Direction = (Direction) Enum.Parse(typeof(Direction), (string) eventArgs.Value);
+        await FetchRecords();
+    }
+}

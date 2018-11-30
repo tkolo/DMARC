@@ -19,6 +19,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using DMARC.Server.Repositories;
+using DMARC.Shared.Dto;
 using DMARC.Shared.Model.Report;
 using Microsoft.AspNetCore.Mvc;
 
@@ -34,9 +35,22 @@ namespace DMARC.Server.Controllers
         }
 
         [HttpGet]
-        public async Task<IEnumerable<Report>> Get()
+        public async Task<ReportsPageResponse> Get([FromQuery] ReportsPageRequest request)
         {
-            return await _reportRepository.GetAllReportsAsync();
+            if (request.PageNum <= 0)
+                request.PageNum = 1;
+
+            var (reports, count) = await _reportRepository.GetAllReportsAsync(request.PageNum, request.PageSize, request.OnlyFailed, request.Direction);
+            return new ReportsPageResponse { Reports = reports, Count =  count };
+        }
+
+        [HttpGet("{id}")]
+        public async Task<IActionResult> Get(string id)
+        {
+            if (string.IsNullOrEmpty(id))
+                return BadRequest();
+            
+            return Ok(await _reportRepository.GetReportAsync(id));
         }
     }
 }

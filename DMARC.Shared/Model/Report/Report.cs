@@ -62,7 +62,7 @@ namespace DMARC.Shared.Model.Report
 
             End = DateTimeOffset.FromUnixTimeSeconds(lEnd);
 
-            Errors = string.Join(",", xReportMetadata.Elements(@"error").Select(x => x.Value));
+            Errors = xReportMetadata.Elements(@"error").Select(x => x.Value).ToList();
 
             // Policy published
             var xPolicyPublished =
@@ -93,32 +93,32 @@ namespace DMARC.Shared.Model.Report
         }
 
         // Report metadata
-        public virtual string ReportId { get; set; }
-        public virtual string OrganizationName { get; set; }
-        public virtual string Email { get; set; }
-        public virtual string ExtraContactInfo { get; set; }
-        public virtual DateTimeOffset Begin { get; set; }
-        public virtual DateTimeOffset End { get; set; }
-        public virtual string Errors { get; set; }
+        public string ReportId { get; set; }
+        public string OrganizationName { get; set; }
+        public string Email { get; set; }
+        public string ExtraContactInfo { get; set; }
+        public DateTimeOffset Begin { get; set; }
+        public DateTimeOffset End { get; set; }
+        public ICollection<string> Errors { get; set; }
 
 
         // Policy published
-        public virtual string Domain { get; set; }
-        public virtual Alignment DkimAlignment { get; set; }
-        public virtual Alignment SpfAlignment { get; set; }
-        public virtual Disposition DomainPolicy { get; set; }
-        public virtual Disposition SubdomainPolicy { get; set; }
-        public virtual int Precent { get; set; }
+        public string Domain { get; set; }
+        public Alignment DkimAlignment { get; set; }
+        public Alignment SpfAlignment { get; set; }
+        public Disposition DomainPolicy { get; set; }
+        public Disposition SubdomainPolicy { get; set; }
+        public int Precent { get; set; }
         public string ServerId { get; set; }
         public bool Incoming { get; set; }
 
-        public virtual IReadOnlyList<Record> Records { get; set; }
+        public ICollection<Record> Records { get; set; }
 
         protected bool Equals(Report other)
         {
             return string.Equals(ReportId, other.ReportId) && string.Equals(OrganizationName, other.OrganizationName) &&
                    string.Equals(Email, other.Email) && string.Equals(ExtraContactInfo, other.ExtraContactInfo) &&
-                   Begin.Equals(other.Begin) && End.Equals(other.End) && string.Equals(Errors, other.Errors) &&
+                   Begin.Equals(other.Begin) && End.Equals(other.End) && Errors.SequenceEqual(other.Errors) &&
                    string.Equals(Domain, other.Domain) && DkimAlignment == other.DkimAlignment &&
                    SpfAlignment == other.SpfAlignment && DomainPolicy == other.DomainPolicy &&
                    SubdomainPolicy == other.SubdomainPolicy && Precent == other.Precent &&
@@ -143,7 +143,8 @@ namespace DMARC.Shared.Model.Report
                 hashCode = (hashCode * 397) ^ (ExtraContactInfo != null ? ExtraContactInfo.GetHashCode() : 0);
                 hashCode = (hashCode * 397) ^ Begin.GetHashCode();
                 hashCode = (hashCode * 397) ^ End.GetHashCode();
-                hashCode = (hashCode * 397) ^ (Errors != null ? Errors.GetHashCode() : 0);
+                if (Errors != null)
+                    hashCode = Errors.Aggregate(hashCode, (current, error) => (current * 397) ^ error.GetHashCode());
                 hashCode = (hashCode * 397) ^ (Domain != null ? Domain.GetHashCode() : 0);
                 hashCode = (hashCode * 397) ^ (int) DkimAlignment;
                 hashCode = (hashCode * 397) ^ (int) SpfAlignment;

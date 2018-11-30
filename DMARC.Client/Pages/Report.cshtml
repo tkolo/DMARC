@@ -1,0 +1,201 @@
+@page "/report/{Id}"
+@using BlazorStrap
+@inject HttpClient HttpClient
+
+@if (ReportObj == null)
+{
+    <p>
+        <em>Loading...</em>
+    </p>
+}
+else
+{
+    <h1 class="pb-2 mt-4 mb-2 border-bottom">@ReportObj.ReportId</h1>
+    <div class="mb-2">
+        <div class="row">
+            <div class="col font-weight-bold">Begin</div>
+            <div class="col">@ReportObj.Begin.Date.ToString("yyyy-MM-dd")</div>
+        </div>
+        <div class="row">
+            <div class="col font-weight-bold">End</div>
+            <div class="col">@ReportObj.End.Date.ToString("yyyy-MM-dd")</div>
+        </div>
+        <div class="row">
+            <div class="col font-weight-bold">Domain</div>
+            <div class="col">@ReportObj.Domain</div>
+        </div>
+        @if (ShowMore)
+        {
+            <div class="row">
+                <div class="col font-weight-bold">Email</div>
+                <div class="col">@ReportObj.Email</div>
+            </div>
+            <div class="row">
+                <div class="col font-weight-bold">Errors</div>
+                <div class="col">
+                    @{ var errors = ReportObj.Errors ?? new List<string>(); }
+                    @if (errors.Count == 0)
+                    {
+                        @:No errors
+                    }
+                    else
+                    {
+                        <ul>
+                            @foreach (var error in errors)
+                            {
+                                @error
+                            }
+                        </ul>
+                    }
+                </div>
+            </div>
+            <div class="row">
+                <div class="col font-weight-bold">Incoming</div>
+                <div class="col">
+                    @if (ReportObj.Incoming)
+                    {
+                        @:Yes
+                    }
+                    else
+                    {
+                        @:No
+                    }
+                </div>
+            </div>
+            <div class="row">
+                <div class="col font-weight-bold">Percent</div>
+                <div class="col">@ReportObj.Precent</div>
+            </div>
+            <div class="row">
+                <div class="col font-weight-bold">Dkim alignment</div>
+                <div class="col">@ReportObj.DkimAlignment.ToString()</div>
+            </div>
+            <div class="row">
+                <div class="col font-weight-bold">Spf alignment</div>
+                <div class="col">@ReportObj.SpfAlignment.ToString()</div>
+            </div>
+            <div class="row">
+                <div class="col font-weight-bold">Domain policy</div>
+                <div class="col">@ReportObj.DomainPolicy.ToString()</div>
+            </div>
+            <div class="row">
+                <div class="col font-weight-bold">Subdomain policy</div>
+                <div class="col">@ReportObj.SubdomainPolicy.ToString()</div>
+            </div>
+            <div class="row">
+                <div class="col font-weight-bold">Organization name</div>
+                <div class="col">@ReportObj.OrganizationName</div>
+            </div>
+            if (!string.IsNullOrEmpty(ReportObj.ExtraContactInfo))
+            {
+                <div class="row">
+                    <div class="col font-weight-bold">Extra contact info</div>
+                    <div class="col">@ReportObj.ExtraContactInfo</div>
+                </div>
+            }
+        }
+        else
+        {
+            <a href="javascript:void(0)" onclick="@{ () => ShowMore = true }">Show more...</a>
+        }
+    </div>
+    var envelopeTo = ReportObj.Records.Any(r => !string.IsNullOrEmpty(r.EnvelopeTo));
+    <table class="table">
+        <thead>
+        <tr>
+            <th>Count</th>
+            <th>Disposition</th>
+            <th>Dkim</th>
+            <th>Spf</th>
+            @if (envelopeTo)
+            {
+                <th>Envelope to</th>
+            }
+            <th>Header from</th>
+            <th>Source IP</th>
+        </tr>
+        </thead>
+        <tbody>
+        @foreach (var record in ReportObj.Records)
+        {
+            <tr>
+                <td>@record.Count</td>
+                <td>@record.Disposition.ToString()</td>
+                <td>
+                    @{
+                        var dkimId = $"dkim-{record.SourceIp}";
+                    }
+                    <a href="javascript:void(0)" id="@dkimId">@record.Dkim.ToString()</a>
+                    <Tooltip Target="@dkimId" Placement="Placement.Top">
+                        @foreach (var dkimAuthResult in record.Dkims)
+                        {
+                            <div class="mb-1">
+                                <div class="row">
+                                    <div class="col font-weight-bold">Domain</div>
+                                    <div class="col">@dkimAuthResult.Domain</div>
+                                </div>
+                                <div class="row">
+                                    <div class="col font-weight-bold">Result</div>
+                                    <div class="col">
+                                        @dkimAuthResult.Result.ToString()
+                                        @if (!string.IsNullOrEmpty(dkimAuthResult.HumanResult))
+                                        {
+                                            @:(@dkimAuthResult.HumanResult)
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </Tooltip>
+                </td>
+                <td>
+                    @{
+                        var spfId = $"spf-{record.SourceIp}";
+                    }
+                    <a href="javascript:void(0)" id="@spfId">@record.Spf.ToString()</a>
+                    <Tooltip Target="@spfId" Placement="Placement.Top">
+                        @foreach (var spfAuthResult in record.Spfs)
+                        {
+                            <div class="mb-1">
+                                <div class="row">
+                                    <div class="col font-weight-bold">Domain</div>
+                                    <div class="col">@spfAuthResult.Domain</div>
+                                </div>
+                                <div class="row">
+                                    <div class="col font-weight-bold">Result</div>
+                                    <div class="col">
+                                        @spfAuthResult.Result.ToString()
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </Tooltip>
+                </td>
+                @if (envelopeTo)
+                {
+                    <td>@record.EnvelopeTo</td>
+                }
+                <td>@record.HeaderFrom</td>
+                <td>@record.SourceIp</td>
+            </tr>
+        }
+        </tbody>
+    </table>
+}
+
+@functions
+{
+
+    [Parameter]
+    private string Id { get; set; }
+
+    private DMARC.Shared.Model.Report.Report ReportObj { get; set; }
+
+    public bool ShowMore { get; set; }
+
+    protected override async Task OnInitAsync()
+    {
+        ReportObj = await HttpClient.GetJsonAsync<DMARC.Shared.Model.Report.Report>($"api/report/{Id}");
+    }
+
+}

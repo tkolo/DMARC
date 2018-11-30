@@ -1,7 +1,7 @@
 #region License
 
 // DMARC report aggregator
-// Copyright (C) 2018 Tomasz Kołosowski
+// Copyright (C) 2018 Tomasz Kolosowski
 // 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -18,24 +18,20 @@
 
 #endregion
 
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using DMARC.Shared.Dto;
-using DMARC.Shared.Model;
-using DMARC.Shared.Model.Report;
-
-namespace DMARC.Server.Repositories
+namespace DMARC.Shared.Dto
 {
-    public interface IReportRepository
+    public class ReportsPageRequest
     {
-        Task AddReportAsync(Report report);
+        public int PageNum { get; set; }
+        public int PageSize { get; set; }
+        public bool OnlyFailed { get; set; }
+        public Direction Direction { get; set; }
+    }
 
-        Task<Report> GetReportAsync(string reportId);
-
-        Task<(IEnumerable<Report>, int)> GetAllReportsAsync(int pageNum, 
-            int pageSize = 50, 
-            bool onlyFailed = false,
-            Direction requestDirection = Direction.Both);
-
+    public enum Direction
+    {
+        Both,
+        Incoming,
+        Outgoing
     }
 }

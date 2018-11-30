@@ -30,8 +30,8 @@ namespace DMARC.Shared.Model.Report
             Result = SpfResultParser.Parse(xSpfAuthResult.Element(@"result") ?? throw new InvalidDmarcReportFormatException());
         }
 
-        public virtual string Domain { get; set; }
-        public virtual SpfResult Result { get; set; }
+        public string Domain { get; set; }
+        public SpfResult Result { get; set; }
 
         protected bool Equals(SpfAuthResult other)
         {

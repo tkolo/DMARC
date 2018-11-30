@@ -10,8 +10,8 @@
     @foreach (var options in Options ?? Enumerable.Empty<ImapClientOptions>())
     {
         var localIndex = i;
-        <div class="col-md-4 col-lg-2 bg-light m-1 p-2 border">
-            <form>
+        <div class="col-md-12 col-lg-6 col-xl-4 p-1">
+            <form class="bg-light p-2 border w-100 h-100">
                 <div class="form-group">
                     <label for="serverId">Id</label>
                     <input type="text" class="form-control" id="serverId" placeholder="Server id" readonly="readonly" bind="@options.Id" />
@@ -64,10 +64,12 @@
         </div>
         i++;
     }
-    <div class="col-md-4 col-lg-2 m-1 p-2 bg-light border d-flex justify-content-center align-items-center">
-        <button type="button" class="btn btn-primary" onclick=@AddNewServer>
-            <span class="oi oi-plus" aria-hidden="true"></span> Add new
-        </button>
+    <div class="col-md-12 col-lg-6 col-xl-4 p-1">
+        <div class="bg-light p-2 border w-100 h-100 d-flex justify-content-center align-items-center">
+            <button type="button" class="btn btn-primary" onclick="@AddNewServer">
+                <span class="oi oi-plus" aria-hidden="true"></span> Add new
+            </button>
+        </div>
     </div>
 </div>
 <div class="row">

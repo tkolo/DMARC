@@ -28,6 +28,7 @@ namespace DMARC.Shared.Model.Report
     {
         public Record()
         {
+            
         }
 
         public Record(XElement xRecord)
@@ -67,22 +68,22 @@ namespace DMARC.Shared.Model.Report
         }
 
         // Row
-        public virtual string SourceIp { get; set; }
-        public virtual int Count { get; set; }
+        public string SourceIp { get; set; }
+        public int Count { get; set; }
 
         // Policy evaluated        
-        public virtual Disposition Disposition { get; set; }
-        public virtual DmarcResult Dkim { get; set; }
-        public virtual DmarcResult Spf { get; set; }
-        public virtual IReadOnlyList<PolicyOverrideReason> Reasons { get; set; }
+        public Disposition Disposition { get; set; }
+        public DmarcResult Dkim { get; set; }
+        public DmarcResult Spf { get; set; }
+        public ICollection<PolicyOverrideReason> Reasons { get; set; }
 
         // Identifier
-        public virtual string EnvelopeTo { get; set; }
-        public virtual string HeaderFrom { get; set; }
+        public string EnvelopeTo { get; set; }
+        public string HeaderFrom { get; set; }
 
         // Auth result
-        public virtual IReadOnlyList<DkimAuthResult> Dkims { get; set; }
-        public virtual IReadOnlyList<SpfAuthResult> Spfs { get; set; }
+        public ICollection<DkimAuthResult> Dkims { get; set; }
+        public ICollection<SpfAuthResult> Spfs { get; set; }
 
         protected bool Equals(Record other)
         {

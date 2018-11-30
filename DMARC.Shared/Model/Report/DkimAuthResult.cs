@@ -31,9 +31,9 @@ namespace DMARC.Shared.Model.Report
             HumanResult = xDkimAuthResult.Element(@"human_result")?.Value;
         }
 
-        public virtual string Domain { get; set; }
-        public virtual DkimResult Result { get; set; }
-        public virtual string HumanResult { get; set; }
+        public string Domain { get; set; }
+        public DkimResult Result { get; set; }
+        public string HumanResult { get; set; }
 
         protected bool Equals(DkimAuthResult other)
         {

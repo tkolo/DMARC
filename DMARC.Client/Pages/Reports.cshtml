@@ -38,19 +38,19 @@ else
                 <td>@report.Domain</td>
                 @if (report.Records != null && report.Records.Any(x => x.Spf == DmarcResult.Fail))
                 {
-                    <td>Fail</td>
+                    <td class="text-danger">Fail</td>
                 }
                 else
                 {
-                    <td>Pass</td>
+                    <td class="text-success">Pass</td>
                 }
                 @if (report.Records != null && report.Records.Any(x => x.Dkim == DmarcResult.Fail))
                 {
-                    <td>Fail</td>
+                    <td class="text-danger">Fail</td>
                 }
                 else
                 {
-                    <td>Pass</td>
+                    <td class="text-success">Pass</td>
                 }
                 <td>@report.Begin.Date.ToString("yyyy-MM-dd")</td>
                 <td>@report.End.Date.ToString("yyyy-MM-dd")</td>

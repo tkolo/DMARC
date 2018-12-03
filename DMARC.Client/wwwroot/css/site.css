@@ -121,3 +121,7 @@ app {
         display: block;
     }
 }
+
+.popover {
+    max-width: 500px;
+}

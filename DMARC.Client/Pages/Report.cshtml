@@ -1,5 +1,6 @@
 @page "/report/{Id}"
 @using BlazorStrap
+@using DMARC.Shared.Model.Report
 @inject HttpClient HttpClient
 
 @if (ReportObj == null)
@@ -40,7 +41,7 @@ else
                     }
                     else
                     {
-                        <ul>
+                        <ul class="text-danger">
                             @foreach (var error in errors)
                             {
                                 @error
@@ -96,90 +97,259 @@ else
         }
         else
         {
-            <a href="javascript:void(0)" onclick="@{ () => ShowMore = true }">Show more...</a>
+            <a href="javascript:void(0)" onclick="@{() => ShowMore = true}">Show more...</a>
         }
     </div>
     var envelopeTo = ReportObj.Records.Any(r => !string.IsNullOrEmpty(r.EnvelopeTo));
     <table class="table">
-        <thead>
-        <tr>
-            <th>Count</th>
-            <th>Disposition</th>
-            <th>Dkim</th>
-            <th>Spf</th>
-            @if (envelopeTo)
-            {
-                <th>Envelope to</th>
-            }
-            <th>Header from</th>
-            <th>Source IP</th>
-        </tr>
-        </thead>
-        <tbody>
-        @foreach (var record in ReportObj.Records)
+    <thead>
+    <tr>
+        <th>Count</th>
+        <th>Disposition</th>
+        <th>Dkim</th>
+        <th>Spf</th>
+        @if (envelopeTo)
         {
-            <tr>
-                <td>@record.Count</td>
-                <td>@record.Disposition.ToString()</td>
-                <td>
-                    @{
-                        var dkimId = $"dkim-{record.SourceIp}";
-                    }
-                    <a href="javascript:void(0)" id="@dkimId">@record.Dkim.ToString()</a>
-                    <Tooltip Target="@dkimId" Placement="Placement.Top">
-                        @foreach (var dkimAuthResult in record.Dkims)
-                        {
-                            <div class="mb-1">
-                                <div class="row">
-                                    <div class="col font-weight-bold">Domain</div>
-                                    <div class="col">@dkimAuthResult.Domain</div>
-                                </div>
-                                <div class="row">
-                                    <div class="col font-weight-bold">Result</div>
-                                    <div class="col">
-                                        @dkimAuthResult.Result.ToString()
-                                        @if (!string.IsNullOrEmpty(dkimAuthResult.HumanResult))
-                                        {
-                                            @:(@dkimAuthResult.HumanResult)
-                                        }
-                                    </div>
-                                </div>
-                            </div>
-                        }
-                    </Tooltip>
-                </td>
-                <td>
-                    @{
-                        var spfId = $"spf-{record.SourceIp}";
-                    }
-                    <a href="javascript:void(0)" id="@spfId">@record.Spf.ToString()</a>
-                    <Tooltip Target="@spfId" Placement="Placement.Top">
-                        @foreach (var spfAuthResult in record.Spfs)
-                        {
-                            <div class="mb-1">
-                                <div class="row">
-                                    <div class="col font-weight-bold">Domain</div>
-                                    <div class="col">@spfAuthResult.Domain</div>
-                                </div>
-                                <div class="row">
-                                    <div class="col font-weight-bold">Result</div>
-                                    <div class="col">
-                                        @spfAuthResult.Result.ToString()
-                                    </div>
-                                </div>
-                            </div>
-                        }
-                    </Tooltip>
-                </td>
-                @if (envelopeTo)
-                {
-                    <td>@record.EnvelopeTo</td>
-                }
-                <td>@record.HeaderFrom</td>
-                <td>@record.SourceIp</td>
-            </tr>
+            <th>Envelope to</th>
         }
-        </tbody>
+        <th>Header from</th>
+        <th>Source IP</th>
+    </tr>
+    </thead>
+    <tbody>
+    @{ var i = 0; }
+    @foreach (var record in ReportObj.Records)
+    {
+        var localIndex = i++;
+
+        <tr>
+        <td>@record.Count</td>
+        <td>@record.Disposition.ToString()</td>
+        <td>
+            @{
+                var dkimId = $"dkim-{record.SourceIp}";
+            }
+            <a href="javascript:void(0)"
+               onclick="@{() => PopoverState[localIndex].dkim = !PopoverState[localIndex].dkim}"
+               id="@dkimId">
+                @if (record.Dkim == DmarcResult.Fail)
+                {
+                    <span class="text-danger">@record.Dkim.ToString()</span>
+                }
+                else
+                {
+                    <span class="text-success">@record.Dkim.ToString()</span>
+                }
+            </a>
+            <Popover Target="@dkimId" IsOpen="@PopoverState[localIndex].dkim" Placement="Placement.Right">
+                <div class="p-2">
+                    @foreach (var dkimAuthResult in record.Dkims)
+                    {
+                        <div class="mb-1">
+                            <div class="row">
+                                <div class="col-3 font-weight-bold">Domain</div>
+                                <div class="col">@dkimAuthResult.Domain</div>
+                            </div>
+                            <div class="row">
+                                <div class="col-3 font-weight-bold">Result</div>
+                                <div class="col">
+                                    @switch (dkimAuthResult.Result)
+                                    {
+                                        case DkimResult.None:
+                                            <p class="text-muted">@dkimAuthResult.Result.ToString()</p>
+                                            <p class="text-muted">The message was not signed</p>
+                                            break;
+                                        case DkimResult.Pass:
+                                            <p class="text-success">@dkimAuthResult.Result.ToString()</p>
+                                            <p class="text-muted">
+                                                The message was signed, the signature or signatures were
+                                                acceptable to the ADMD, and the signature(s) passed verification
+                                                tests.
+                                            </p>
+                                            break;
+                                        case DkimResult.Fail:
+                                            <p class="text-danger">@dkimAuthResult.Result.ToString()</p>
+                                            <p class="text-muted">
+                                                The message was signed and the signature or signatures were
+                                                acceptable to the ADMD, but they failed the verification test(s).
+                                            </p>
+                                            break;
+                                        case DkimResult.Policy:
+                                            <p class="text-danger">@dkimAuthResult.Result.ToString()</p>
+                                            <p class="text-muted">
+                                                The message was signed, but some aspect of the signature or
+                                                signatures was not acceptable to the ADMD.
+                                            </p>
+                                            break;
+                                        case DkimResult.Neutral:
+                                            <p class="text-warning">@dkimAuthResult.Result.ToString()</p>
+                                            <p class="text-muted">
+                                                The message was signed, but the signature or signatures
+                                                contained syntax errors or were not otherwise able to be
+                                                processed. This result is also used for other failures not
+                                                covered elsewhere in this list.
+                                            </p>
+                                            break;
+                                        case DkimResult.TempError:
+                                            <p class="text-warning">@dkimAuthResult.Result.ToString()</p>
+                                            <p class="text-muted">
+                                                The message could not be verified due to some error that
+                                                is likely transient in nature, such as a temporary inability to
+                                                retrieve a public key. A later attempt may produce a final
+                                                result.
+                                            </p>
+                                            break;
+                                        case DkimResult.PermError:
+                                            <p class="text-danger">@dkimAuthResult.Result.ToString()</p>
+                                            <p class="text-muted">
+                                                The message could not be verified due to some error that
+                                                is unrecoverable, such as a required header field being absent. A
+                                                later attempt is unlikely to produce a final result.
+                                            </p>
+                                            break;
+                                        default:
+                                            throw new ArgumentOutOfRangeException();
+                                    }
+                                    @if (!string.IsNullOrEmpty(dkimAuthResult.HumanResult))
+                                    {
+                                        @:(@dkimAuthResult.HumanResult)
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </Popover>
+        </td>
+        <td>
+            @{
+                var spfId = $"spf-{record.SourceIp}";
+            }
+            <a href="javascript:void(0)"
+               onclick="@{() => PopoverState[localIndex].spf = !PopoverState[localIndex].spf}"
+               id="@spfId">
+                @if (record.Spf == DmarcResult.Fail)
+                {
+                    <span class="text-danger">@record.Spf.ToString()</span>
+                }
+                else
+                {
+                    <span class="text-success">@record.Spf.ToString()</span>
+                }
+            </a>
+            <Popover Target="@spfId" IsOpen="@PopoverState[localIndex].spf" Placement="Placement.Right">
+                <div class="p-2">
+                    @foreach (var spfAuthResult in record.Spfs)
+                    {
+                        <div class="mb-1">
+                            <div class="row">
+                                <div class="col font-weight-bold">Domain</div>
+                                <div class="col">@spfAuthResult.Domain</div>
+                            </div>
+                            <div class="row">
+                                <div class="col font-weight-bold">Result</div>
+                                <div class="col">
+                                    @switch (spfAuthResult.Result)
+                                    {
+                                        case SpfResult.None:
+                                            <p class="text-muted">@spfAuthResult.Result.ToString()</p>
+                                            <p class="text-muted">
+                                                A result of "None" means that no records were published by the domain
+                                                or that no checkable sender domain could be determined from the given
+                                                identity. The checking software cannot ascertain whether or not the
+                                                client host is authorized.
+                                            </p>
+                                            break;
+                                        case SpfResult.Neutral:
+                                            <p class="text-muted">@spfAuthResult.Result.ToString()</p>
+                                            <p class="text-muted">
+                                                The domain owner has explicitly stated that he cannot or does not
+                                                want to assert whether or not the IP address is authorized. A
+                                                "Neutral" result MUST be treated exactly like the "None" result; the
+                                                distinction exists only for informational purposes. Treating
+                                                "Neutral" more harshly than "None" would discourage domain owners
+                                                from testing the use of SPF records (see <a href="https://tools.ietf.org/html/rfc4408#section-9.1">Section 9.1</a>).
+                                            </p>
+                                            break;
+                                        case SpfResult.Pass:
+                                            <p class="text-success">@spfAuthResult.Result.ToString()</p>
+                                            <p class="text-muted">
+                                                A "Pass" result means that the client is authorized to inject mail
+                                                with the given identity. The domain can now, in the sense of
+                                                reputation, be considered responsible for sending the message.
+                                                Further policy checks can now proceed with confidence in the
+                                                legitimate use of the identity.
+                                            </p>
+                                            break;
+                                        case SpfResult.Fail:
+                                            <p class="text-danger">@spfAuthResult.Result.ToString()</p>
+                                            <p class="text-muted">
+                                                A "Fail" result is an explicit statement that the client is not
+                                                authorized to use the domain in the given identity. The checking
+                                                software can choose to mark the mail based on this or to reject the
+                                                mail outright.
+                                            </p>
+                                            break;
+                                        case SpfResult.SoftFail:
+                                            <p class="text-warning">@spfAuthResult.Result.ToString()</p>
+                                            <p class="text-muted">
+                                                A "SoftFail" result should be treated as somewhere between a "Fail"
+                                                and a "Neutral". The domain believes the host is not authorized but
+                                                is not willing to make that strong of a statement. Receiving
+                                                software SHOULD NOT reject the message based solely on this result,
+                                                but MAY subject the message to closer scrutiny than normal.
+
+                                                The domain owner wants to discourage the use of this host and thus
+                                                desires limited feedback when a "SoftFail" result occurs. For
+                                                example, the recipient's Mail User Agent (MUA) could highlight the
+                                                "SoftFail" status, or the receiving MTA could give the sender a
+                                                message using a technique called "greylisting" whereby the MTA can
+                                                issue an SMTP reply code of 451 (4.3.0 DSN code) with a note the
+                                                first time the message is received, but accept it the second time.
+                                            </p>
+                                            break;
+                                        case SpfResult.TempError:
+                                            <p class="text-muted">@spfAuthResult.Result.ToString()</p>
+                                            <p class="text-muted">
+                                                A "TempError" result means that the SPF client encountered a
+                                                transient error while performing the check. Checking software can
+                                                choose to accept or temporarily reject the message. If the message
+                                                is rejected during the SMTP transaction for this reason, the software
+                                                SHOULD use an SMTP reply code of 451 and, if supported, the 4.4.3 DSN
+                                                code.
+                                            </p>
+                                            break;
+                                        case SpfResult.PermError:
+                                            <p class="text-danger">@spfAuthResult.Result.ToString()</p>
+                                            <p class="text-muted">
+                                                A "PermError" result means that the domain's published records could
+                                                not be correctly interpreted. This signals an error condition that
+                                                requires manual intervention to be resolved, as opposed to the
+                                                TempError result. Be aware that if the domain owner uses macros
+                                                (<a href="https://tools.ietf.org/html/rfc4408#section-8">Section 8</a>),
+                                                it is possible that this result is due to the checked identities having an
+                                                unexpected format.
+                                            </p>
+                                            break;
+                                        default:
+                                            throw new ArgumentOutOfRangeException();
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </Popover>
+        </td>
+        @if (envelopeTo)
+        {
+            <td>@record.EnvelopeTo</td>
+        }
+        <td>@record.HeaderFrom</td>
+        <td>@record.SourceIp</td>
+        </tr>
+    }
+    </tbody>
     </table>
 }
 
@@ -189,6 +359,8 @@ else
     [Parameter]
     private string Id { get; set; }
 
+    private (bool dkim, bool spf)[] PopoverState { get; set; }
+
     private DMARC.Shared.Model.Report.Report ReportObj { get; set; }
 
     public bool ShowMore { get; set; }
@@ -196,6 +368,7 @@ else
     protected override async Task OnInitAsync()
     {
         ReportObj = await HttpClient.GetJsonAsync<DMARC.Shared.Model.Report.Report>($"api/report/{Id}");
+        PopoverState = new (bool, bool)[ReportObj.Records.Count];
     }
 
 }

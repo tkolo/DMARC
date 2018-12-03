@@ -1,0 +1,105 @@
+@using DMARC.Shared.Model.Report
+@model Report
+@{ 
+    Layout = "_EmailLayout";
+}
+<h1 class="pb-2 mt-4 mb-2 border-bottom">@Model.ReportId</h1>
+<div class="mb-2">
+    <div class="row">
+        <div class="col font-weight-bold">Begin</div>
+        <div class="col">@Model.Begin.Date.ToString("yyyy-MM-dd")</div>
+    </div>
+    <div class="row">
+        <div class="col font-weight-bold">End</div>
+        <div class="col">@Model.End.Date.ToString("yyyy-MM-dd")</div>
+    </div>
+    <div class="row">
+        <div class="col font-weight-bold">Domain</div>
+        <div class="col">@Model.Domain</div>
+    </div>
+    <div class="row">
+        <div class="col font-weight-bold">Errors</div>
+        <div class="col">
+            @{ var errors = Model.Errors ?? new List<string>(); }
+            @if (errors.Count == 0)
+            {
+                @:No errors
+            }
+            else
+            {
+                <ul class="text-danger">
+                    @foreach (var error in errors)
+                    {
+                        @error
+                    }
+                </ul>
+            }
+        </div>
+    </div>
+    <div class="row">
+        <div class="col font-weight-bold">Incoming</div>
+        <div class="col">
+            @if (Model.Incoming)
+            {
+                @:Yes
+            }
+            else
+            {
+                @:No
+            }
+        </div>
+    </div>
+    
+</div>
+@{ var envelopeTo = Model.Records.Any(r => !string.IsNullOrEmpty(r.EnvelopeTo)); }
+<table class="table">
+<thead>
+<tr>
+    <th>Count</th>
+    <th>Disposition</th>
+    <th>Dkim</th>
+    <th>Spf</th>
+    @if (envelopeTo)
+    {
+        <th>Envelope to</th>
+    }
+    <th>Header from</th>
+    <th>Source IP</th>
+</tr>
+</thead>
+<tbody>
+@foreach (var record in Model.Records)
+{
+    <tr>
+        <td>@record.Count</td>
+        <td>@record.Disposition.ToString()</td>
+        <td>
+            @if (record.Dkim == DmarcResult.Fail)
+            {
+                <span class="text-danger">@record.Dkim.ToString()</span>
+            }
+            else
+            {
+                <span class="text-success">@record.Dkim.ToString()</span>
+            }
+        </td>
+        <td>
+            @if (record.Spf == DmarcResult.Fail)
+            {
+                <span class="text-danger">@record.Spf.ToString()</span>
+            }
+            else
+            {
+                <span class="text-success">@record.Spf.ToString()</span>
+            }
+        </td>
+        @if (envelopeTo)
+        {
+            <td>@record.EnvelopeTo</td>
+        }
+        <td>@record.HeaderFrom</td>
+        <td>@record.SourceIp</td>
+    </tr>
+}
+</tbody>
+</table>

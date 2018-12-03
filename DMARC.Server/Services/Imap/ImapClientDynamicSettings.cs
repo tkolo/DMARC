@@ -18,7 +18,7 @@
 
 #endregion
 
-namespace DMARC.Server.Services.ImapClient
+namespace DMARC.Server.Services.Imap
 {
     public class ImapClientDynamicSettings
     {

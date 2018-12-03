@@ -18,18 +18,12 @@
 
 #endregion
 
-using System.Collections.Generic;
 using System.Threading.Tasks;
-using DMARC.Server.Services.Imap;
 
-namespace DMARC.Server.Repositories
+namespace DMARC.Server.Services.RazorRenderer
 {
-    public interface IImapClientDynamicSettingsRepository
+    public interface IRazorViewToStringRenderer
     {
-        Task<IEnumerable<ImapClientDynamicSettings>> GetAllAsync();
-        
-        Task<ImapClientDynamicSettings> GetAsync(string clientId);
-
-        Task SaveAsync(ImapClientDynamicSettings settings);
+        Task<string> RenderViewToStringAsync<TModel>(string viewName, TModel model);
     }
 }

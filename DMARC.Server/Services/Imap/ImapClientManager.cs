@@ -20,12 +20,15 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
+using DMARC.Server.Repositories;
+using DMARC.Server.Services.Smtp;
 using DMARC.Shared.Model.Settings;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 
-namespace DMARC.Server.Services.ImapClient
+namespace DMARC.Server.Services.Imap
 {
     public class ImapClientManager : IImapClientManager
     {

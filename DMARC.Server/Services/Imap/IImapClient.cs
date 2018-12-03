@@ -20,7 +20,7 @@ using System;
 using System.Threading.Tasks;
 using DMARC.Shared.Model.Settings;
 
-namespace DMARC.Server.Services.ImapClient
+namespace DMARC.Server.Services.Imap
 {
     public interface IImapClient : IDisposable
     {

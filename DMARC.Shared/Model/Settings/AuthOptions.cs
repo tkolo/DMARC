@@ -36,8 +36,9 @@ namespace DMARC.Shared.Model.Settings
 
     public class SmtpOptions : AuthOptions
     {
-        public List<string> SendTo { get; set; } = new List<string>();
+        public string From { get; set; }
         public SendVerbosity SendVerbosity { get; set; }
+        public List<string> SendTo { get; set; } = new List<string>();
     }
 
     public enum SslMode

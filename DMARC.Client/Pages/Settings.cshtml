@@ -122,9 +122,17 @@
                                        bind="@options.SmtpOptions.Password"/>
                             </div>
                             <div class="form-group">
-                                <label for="protocol">Send verbosity</label>
+                                <label for="fromAddress">From</label>
+                                <input type="text"
+                                       class="form-control"
+                                       id="fromAddress"
+                                       placeholder="Address"
+                                       bind="@options.SmtpOptions.From"/>
+                            </div>
+                            <div class="form-group">
+                                <label for="sendVerbosity">Send verbosity</label>
                                 <select class="form-control"
-                                        id="protocol"
+                                        id="sendVerbosity"
                                         bind="@options.SmtpOptions.SendVerbosity">
                                     <option value=@SendVerbosity.All>Send all reports</option>
                                     <option value=@SendVerbosity.PartialFailures>Send only partial failures</option>
@@ -133,14 +141,14 @@
                                 </select>
                             </div>
                             <div class="form-group">
-                                <label for="localDomains">Send to</label>
-                                <div id="localDomains">
+                                <label for="sendTo">Send to</label>
+                                <div id="sendTo">
                                     @{ var k = 0;}
                                     @foreach (var sendTo in options.SmtpOptions.SendTo)
                                     {
                                         var sendToIndex = k;
                                         <div class="input-group mb-1">
-                                            <input type="text" class="form-control" placeholder="Domain" bind="@options.SmtpOptions.SendTo[sendToIndex]"/>
+                                            <input type="text" class="form-control" placeholder="Address" bind="@options.SmtpOptions.SendTo[sendToIndex]"/>
                                             <div class="input-group-append">
                                                 <button class="btn btn-danger" type="button" onclick=@{() => RemoveSendTo(localIndex, sendToIndex)}>
                                                     <span class="oi oi-trash" aria-hidden="true"></span>
@@ -162,34 +170,42 @@
                                    id="server"
                                    placeholder="Server"
                                    disabled="disabled"/>
-                        </div>
-                        <div class="form-group">
-                            <label for="protocol">Protocol</label>
-                            <select class="form-control"
-                                    id="protocol"
-                                    disabled="disabled">
-                                <option value=@SslMode.Auto>@SslMode.Auto.ToString()</option>
-                                <option value=@SslMode.NoSsl>@SslMode.NoSsl.ToString()</option>
-                                <option value=@SslMode.Ssl>@SslMode.Ssl.ToString()</option>
-                                <option value=@SslMode.StartTls>@SslMode.StartTls.ToString()</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label for="username">Username</label>
-                            <input type="text"
-                                   class="form-control"
-                                   id="username"
-                                   placeholder="Username"
-                                   disabled="disabled"/>
-                        </div>
-                        <div class="form-group">
-                            <label for="password">Password</label>
-                            <input type="password"
-                                   class="form-control"
-                                   id="password"
-                                   placeholder="Password"
-                                   disabled="disabled"/>
-                        </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="protocol">Protocol</label>
+                                <select class="form-control"
+                                        id="protocol"
+                                        disabled="disabled">
+                                    <option value=@SslMode.Auto>@SslMode.Auto.ToString()</option>
+                                    <option value=@SslMode.NoSsl>@SslMode.NoSsl.ToString()</option>
+                                    <option value=@SslMode.Ssl>@SslMode.Ssl.ToString()</option>
+                                    <option value=@SslMode.StartTls>@SslMode.StartTls.ToString()</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="username">Username</label>
+                                <input type="text"
+                                       class="form-control"
+                                       id="username"
+                                       placeholder="Username"
+                                       disabled="disabled"/>
+                            </div>
+                            <div class="form-group">
+                                <label for="password">Password</label>
+                                <input type="password"
+                                       class="form-control"
+                                       id="password"
+                                       placeholder="Password"
+                                       disabled="disabled"/>
+                            </div>
+                            <div class="form-group">
+                                <label for="fromAddress">From</label>
+                                <input type="text"
+                                       class="form-control"
+                                       id="fromAddress"
+                                       placeholder="Address"
+                                       disabled="disabled"/>
+                            </div>
                         }
                     </div>
                 </div>

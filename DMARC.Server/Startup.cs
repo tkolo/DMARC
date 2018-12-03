@@ -29,7 +29,9 @@ using System.Linq;
 using System.Net.Mime;
 using DMARC.Server.Repositories;
 using DMARC.Server.Repositories.ElasticsearchRepositories;
-using DMARC.Server.Services.ImapClient;
+using DMARC.Server.Services.Imap;
+using DMARC.Server.Services.RazorRenderer;
+using DMARC.Server.Services.Smtp;
 using DMARC.Server.Services.WritableOptions;
 using DMARC.Shared.Model.Settings;
 using Microsoft.Extensions.Configuration;
@@ -70,12 +72,13 @@ namespace DMARC.Server
 
             //repositories
             services.AddScoped<IReportRepository, ElasticsearchReportRepository>();
-            services
-                .AddScoped<IImapClientDynamicSettingsRepository, ElasticsearchImapClientDynamicSettingsRepository>();
+            services.AddScoped<IImapClientDynamicSettingsRepository, ElasticsearchImapClientDynamicSettingsRepository>();
 
             // other services
             services.AddScoped<IImapClient, ImapClient>();
             services.AddSingleton<IImapClientManager, ImapClientManager>();
+            services.AddTransient<IRazorViewToStringRenderer, RazorViewToStringRenderer>();
+            services.AddTransient<ISmtpService, SmtpService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

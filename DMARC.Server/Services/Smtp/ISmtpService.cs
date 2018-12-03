@@ -18,18 +18,14 @@
 
 #endregion
 
-using System.Collections.Generic;
 using System.Threading.Tasks;
-using DMARC.Server.Services.Imap;
+using DMARC.Shared.Model.Report;
+using DMARC.Shared.Model.Settings;
 
-namespace DMARC.Server.Repositories
+namespace DMARC.Server.Services.Smtp
 {
-    public interface IImapClientDynamicSettingsRepository
+    public interface ISmtpService
     {
-        Task<IEnumerable<ImapClientDynamicSettings>> GetAllAsync();
-        
-        Task<ImapClientDynamicSettings> GetAsync(string clientId);
-
-        Task SaveAsync(ImapClientDynamicSettings settings);
+        Task SendReport(Report report, SmtpOptions smtpOptions);
     }
 }

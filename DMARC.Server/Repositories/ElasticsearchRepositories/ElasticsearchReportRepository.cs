@@ -40,7 +40,7 @@ namespace DMARC.Server.Repositories.ElasticsearchRepositories
         {
             var documentPath = DocumentPath<Report>.Id(report);
 
-            if ((await Client.DocumentExistsAsync(documentPath)).Exists)
+            if (await CheckIfExistsAsync(report))
             {
                 var oldReport = (await Client.GetAsync(documentPath)).Source;
                 if (!report.Equals(oldReport))
@@ -50,6 +50,12 @@ namespace DMARC.Server.Repositories.ElasticsearchRepositories
             {
                 await Client.IndexAsync(report, x => x.Index("reports").Id(report.ReportId));
             }
+        }
+
+        public async Task<bool> CheckIfExistsAsync(Report report)
+        {
+            var documentPath = DocumentPath<Report>.Id(report);
+            return  (await Client.DocumentExistsAsync(documentPath)).Exists;
         }
 
         public async Task<Report> GetReportAsync(string reportId)

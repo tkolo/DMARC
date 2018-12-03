@@ -24,28 +24,33 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using DMARC.Server.Repositories;
+using DMARC.Server.Services.Smtp;
+using DMARC.Shared.Model.Report;
 using DMARC.Shared.Model.Settings;
 using MailKit;
 using MailKit.Search;
 using MailKit.Security;
-using Microsoft.Extensions.Options;
+using Microsoft.EntityFrameworkCore.Internal;
 
-namespace DMARC.Server.Services.ImapClient
+namespace DMARC.Server.Services.Imap
 {
     public class ImapClient : IImapClient
     {
         private ServerOptions _options;
         private readonly IReportRepository _reportRepository;
         private readonly IImapClientDynamicSettingsRepository _settingsRepository;
+        private readonly ISmtpService _smtpService;
         private MailKit.Net.Imap.ImapClient _client;
         private CancellationTokenSource _tokenSource;
         private Task _currentTask;
 
         public ImapClient(IReportRepository reportRepository,
-            IImapClientDynamicSettingsRepository settingsRepository)
+            IImapClientDynamicSettingsRepository settingsRepository, 
+            ISmtpService smtpService)
         {
             _reportRepository = reportRepository;
             _settingsRepository = settingsRepository;
+            _smtpService = smtpService;
         }
 
         public void Start(ServerOptions options)
@@ -132,6 +137,7 @@ namespace DMARC.Server.Services.ImapClient
             }
 
 
+            var sendTasks = new List<Task>();
             foreach (var uid in uids)
             {
                 var message = await _client.Inbox.GetMessageAsync(uid, cancellationToken);
@@ -139,14 +145,43 @@ namespace DMARC.Server.Services.ImapClient
                 {
                     report.ServerId = _options.Id;
                     report.Incoming = _options.ImapOptions.LocalDomains.Contains(report.Domain);
+                    if (!await _reportRepository.CheckIfExistsAsync(report))
+                        sendTasks.Add(CheckAndSendReport(report));
                     await _reportRepository.AddReportAsync(report);
                 }
             }
 
             settings.LastReportedUid = uids.LastOrDefault().Id;
             await _settingsRepository.SaveAsync(settings);
+            await Task.WhenAll(sendTasks);
         }
-        
+
+        private async Task CheckAndSendReport(Report report)
+        {
+            var smtpOptions = _options.SmtpOptions;
+            if (smtpOptions != null)
+            {
+                switch (smtpOptions.SendVerbosity)
+                {
+                    case SendVerbosity.All:
+                        await _smtpService.SendReport(report, smtpOptions);
+                        break;
+                    case SendVerbosity.PartialFailures:
+                        if (report.Records.Any(x => x.Spf == DmarcResult.Fail || x.Dkim == DmarcResult.Fail))
+                            await _smtpService.SendReport(report, smtpOptions);
+                        break;
+                    case SendVerbosity.Failures:
+                        if (report.Records.Any(x => x.Spf == DmarcResult.Fail && x.Dkim == DmarcResult.Fail))
+                            await _smtpService.SendReport(report, smtpOptions);
+                        break;
+                    case SendVerbosity.None:
+                        break;
+                    default:
+                        throw new ArgumentOutOfRangeException();
+                }
+            }
+        }
+
         private async Task ListenForNewReports(CancellationToken cancellationToken)
         {
             while (true)

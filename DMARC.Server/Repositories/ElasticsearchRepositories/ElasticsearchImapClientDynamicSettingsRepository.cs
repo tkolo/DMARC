@@ -20,7 +20,7 @@
 
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using DMARC.Server.Services.ImapClient;
+using DMARC.Server.Services.Imap;
 using Microsoft.Extensions.Options;
 using Nest;
 

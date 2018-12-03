@@ -18,7 +18,7 @@
 
 #endregion
 
-using DMARC.Server.Services.ImapClient;
+using DMARC.Server.Services.Imap;
 using DMARC.Shared.Model;
 using DMARC.Shared.Model.Report;
 using Microsoft.Extensions.Options;

@@ -30,6 +30,8 @@ namespace DMARC.Server.Repositories
     {
         Task AddReportAsync(Report report);
 
+        Task<bool> CheckIfExistsAsync(Report report);
+
         Task<Report> GetReportAsync(string reportId);
 
         Task<(IEnumerable<Report>, int)> GetAllReportsAsync(int pageNum, 

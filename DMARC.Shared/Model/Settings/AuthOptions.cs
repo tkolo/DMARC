@@ -21,21 +21,38 @@ using System.Runtime.CompilerServices;
 
 namespace DMARC.Shared.Model.Settings
 {
-    public class ImapClientOptions
+    public class AuthOptions
     {
-        public string Id { get; set; }
         public string Server { get; set; }
-        public ImapProtocol Protocol { get; set; }
+        public SslMode Protocol { get; set; }
         public string Username { get; set; }
         public string Password { get; set; }
+    }
+
+    public class ImapOptions : AuthOptions
+    {
         public List<string> LocalDomains { get; set; } = new List<string>();
     }
 
-    public enum ImapProtocol
+    public class SmtpOptions : AuthOptions
+    {
+        public List<string> SendTo { get; set; } = new List<string>();
+        public SendVerbosity SendVerbosity { get; set; }
+    }
+
+    public enum SslMode
     {
         Auto,
-        Imap,
-        Imaps,
-        ImapStartTls
+        NoSsl,
+        Ssl,
+        StartTls
+    }
+
+    public enum SendVerbosity
+    {
+        All,
+        PartialFailures,
+        Failures,
+        None
     }
 }

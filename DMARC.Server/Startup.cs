@@ -63,7 +63,7 @@ namespace DMARC.Server
             });
 
             // configurations
-            services.ConfigureWritable<List<ImapClientOptions>>(Configuration.GetSection("ImapClients"),
+            services.ConfigureWritable<List<ServerOptions>>(Configuration.GetSection("Servers"),
                 Program.WritableFileName);
             services.ConfigureWritable<ElasticsearchConfig>(Configuration.GetSection("ElasticsearchConfig"),
                 Program.WritableFileName);

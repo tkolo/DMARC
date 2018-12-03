@@ -34,7 +34,7 @@ namespace DMARC.Server.Services.ImapClient
 {
     public class ImapClient : IImapClient
     {
-        private ImapClientOptions _options;
+        private ServerOptions _options;
         private readonly IReportRepository _reportRepository;
         private readonly IImapClientDynamicSettingsRepository _settingsRepository;
         private MailKit.Net.Imap.ImapClient _client;
@@ -48,7 +48,7 @@ namespace DMARC.Server.Services.ImapClient
             _settingsRepository = settingsRepository;
         }
 
-        public void Start(ImapClientOptions options)
+        public void Start(ServerOptions options)
         {
             if (_currentTask != null)
                 throw new InvalidOperationException("Client already started");
@@ -60,7 +60,7 @@ namespace DMARC.Server.Services.ImapClient
 
         private async Task StartInternal()
         {
-            if (string.IsNullOrEmpty(_options.Server))
+            if (string.IsNullOrEmpty(_options.ImapOptions?.Server))
             {
                 _currentTask = null;
                 return;
@@ -83,21 +83,22 @@ namespace DMARC.Server.Services.ImapClient
         {
             int port;
             SecureSocketOptions socketOptions;
-            switch (_options.Protocol)
+            var imapOptions = _options.ImapOptions;
+            switch (imapOptions.Protocol)
             {
-                case ImapProtocol.Auto:
+                case SslMode.Auto:
                     port = 0;
                     socketOptions = SecureSocketOptions.Auto;
                     break;
-                case ImapProtocol.Imap:
+                case SslMode.NoSsl:
                     port = 143;
                     socketOptions = SecureSocketOptions.None;
                     break;
-                case ImapProtocol.Imaps:
+                case SslMode.Ssl:
                     port = 993;
                     socketOptions = SecureSocketOptions.SslOnConnect;
                     break;
-                case ImapProtocol.ImapStartTls:
+                case SslMode.StartTls:
                     port = 143;
                     socketOptions = SecureSocketOptions.StartTls;
                     break;
@@ -106,10 +107,10 @@ namespace DMARC.Server.Services.ImapClient
             }
 
             _client = new MailKit.Net.Imap.ImapClient();
-            await _client.ConnectAsync(_options.Server, port, socketOptions, cancellationToken);
-            if (!string.IsNullOrEmpty(_options.Username))
+            await _client.ConnectAsync(imapOptions.Server, port, socketOptions, cancellationToken);
+            if (!string.IsNullOrEmpty(imapOptions.Username))
             {
-                await _client.AuthenticateAsync(_options.Username, _options.Password, cancellationToken);
+                await _client.AuthenticateAsync(imapOptions.Username, imapOptions.Password, cancellationToken);
             }
 
             await _client.Inbox.OpenAsync(FolderAccess.ReadOnly, cancellationToken);
@@ -137,7 +138,7 @@ namespace DMARC.Server.Services.ImapClient
                 foreach (var report in MailParser.ParseMessage(message))
                 {
                     report.ServerId = _options.Id;
-                    report.Incoming = _options.LocalDomains.Contains(report.Domain);
+                    report.Incoming = _options.ImapOptions.LocalDomains.Contains(report.Domain);
                     await _reportRepository.AddReportAsync(report);
                 }
             }

@@ -7,59 +7,192 @@
         var i = 0;
         var disableRemove = (Options?.Count ?? 0) == 1;
     }
-    @foreach (var options in Options ?? Enumerable.Empty<ImapClientOptions>())
+    @foreach (var options in Options ?? Enumerable.Empty<ServerOptions>())
     {
         var localIndex = i;
-        <div class="col-md-12 col-lg-6 col-xl-4 p-1">
+        <div class="col-md-12 col-xl-6 p-1">
             <form class="bg-light p-2 border w-100 h-100">
-                <div class="form-group">
-                    <label for="serverId">Id</label>
-                    <input type="text" class="form-control" id="serverId" placeholder="Server id" readonly="readonly" bind="@options.Id" />
-                </div>
-                <div class="form-group">
-                    <label for="server">Server</label>
-                    <input type="text" class="form-control" id="server" placeholder="Server" bind="@options.Server" />
-                </div>
-                <div class="form-group">
-                    <label for="protocol">Protocol</label>
-                    <select class="form-control" id="protocol" bind="@options.Protocol">
-                        <option value=@ImapProtocol.Auto>@ImapProtocol.Auto.ToString()</option>
-                        <option value=@ImapProtocol.Imap>@ImapProtocol.Imap.ToString()</option>
-                        <option vaot.tlue=@ImapProtocol.Imaps>@ImapProtocol.Imaps.ToString()</option>
-                        <option value=@ImapProtocol.ImapStartTls>@ImapProtocol.ImapStartTls.ToString()</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="username">Username</label>
-                    <input type="text" class="form-control" id="username" placeholder="Username" bind="@options.Username" />
-                </div>
-                <div class="form-group">
-                    <label for="password">Password</label>
-                    <input type="password" class="form-control" id="password" placeholder="Password" bind="@options.Password" />
-                </div>
-                
-                <div class="form-group">
-                    <label for="localDomains">LocalDomains</label>
-                    <div id="localDomains">
-                        @{ var j = 0;}
-                        @foreach (var localDomain in options.LocalDomains)
-                        {
-                            var localDomainIndex = j;
-                            <div class="input-group mb-1">
-                                <input type="text" class="form-control" placeholder="Domain" bind="@options.LocalDomains[localDomainIndex]"/>
-                                <div class="input-group-append">
-                                    <button class="btn btn-danger" type="button" onclick=@{() => RemoveLocalDomain(localIndex, localDomainIndex)}>
-                                        <span class="oi oi-trash" aria-hidden="true"></span>
-                                    </button>
+                <div class="row">
+                    <div class="col-sm">
+                        <div class="form-group">
+                            <label for="serverId">Id</label>
+                            <input type="text" class="form-control" id="serverId" placeholder="Server id" readonly="readonly" bind="@options.Id"/>
+                        </div>
+                        <div class="form-group">
+                            <label for="server">Server</label>
+                            <input type="text" class="form-control" id="server" placeholder="Server" bind="@options.ImapOptions.Server"/>
+                        </div>
+                        <div class="form-group">
+                            <label for="protocol">Protocol</label>
+                            <select class="form-control" id="protocol" bind="@options.ImapOptions.Protocol">
+                                <option value=@SslMode.Auto>@SslMode.Auto.ToString()</option>
+                                <option value=@SslMode.NoSsl>@SslMode.NoSsl.ToString()</option>
+                                <option vaot.tlue=@SslMode.Ssl>@SslMode.Ssl.ToString()</option>
+                                <option value=@SslMode.StartTls>@SslMode.StartTls.ToString()</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="username">Username</label>
+                            <input type="text" class="form-control" id="username" placeholder="Username" bind="@options.ImapOptions.Username"/>
+                        </div>
+                        <div class="form-group">
+                            <label for="password">Password</label>
+                            <input type="password" class="form-control" id="password" placeholder="Password" bind="@options.ImapOptions.Password"/>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="localDomains">LocalDomains</label>
+                            <div id="localDomains">
+                                @{ var j = 0;}
+                                @foreach (var localDomain in options.ImapOptions.LocalDomains)
+                                {
+                                    var localDomainIndex = j;
+                                    <div class="input-group mb-1">
+                                        <input type="text" class="form-control" placeholder="Domain" bind="@options.ImapOptions.LocalDomains[localDomainIndex]"/>
+                                        <div class="input-group-append">
+                                            <button class="btn btn-danger" type="button" onclick=@{() => RemoveLocalDomain(localIndex, localDomainIndex)}>
+                                                <span class="oi oi-trash" aria-hidden="true"></span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    j++;
+                                }
+                                <button class="btn btn-success" type="button" onclick=@{() => AddNewLocalDomain(localIndex)}>Add new</button>
+                            </div>
+                        </div>
+
+                        <button type="button" class="btn btn-danger" disabled=@disableRemove onclick=@{() => RemoveServer(localIndex)}>Remove</button>
+                    </div>
+                    <div class="col-sm">
+                        <h4>SMTP options</h4>
+                        <div class="row">
+                            <div class="col-auto">
+                                <div class="form-group form-check">
+                                    <input type="checkbox" 
+                                           class="form-check-input" 
+                                           id="smtpEnabledCheck"
+                                           checked="@(options.SmtpOptions != null)"
+                                           onchange="@{e => SmtpCheckOnChange(localIndex, e)}" />
+                                    <label class="form-check-label" for="smtpEnabledCheck">Configure SMTP</label>
                                 </div>
                             </div>
-                            j++;
+                            <div class="col-auto">
+                                <button type="button"
+                                        class="btn btn-primary"
+                                        onclick=@{() => CopyOptions(localIndex)}>
+                                    Copy from IMAP
+                                </button>
+                            </div>
+                        </div>
+                        @if (options.SmtpOptions != null)
+                        {
+                            <div class="form-group">
+                            <label for="server">Server</label>
+                            <input type="text"
+                                   class="form-control"
+                                   id="server"
+                                   placeholder="Server"
+                                   bind="@options.SmtpOptions.Server"/>
+                            </div>
+                            <div class="form-group">
+                                <label for="protocol">Protocol</label>
+                                <select class="form-control"
+                                        id="protocol"
+                                        bind="@options.SmtpOptions.Protocol">
+                                    <option value=@SslMode.Auto>@SslMode.Auto.ToString()</option>
+                                    <option value=@SslMode.NoSsl>@SslMode.NoSsl.ToString()</option>
+                                    <option value=@SslMode.Ssl>@SslMode.Ssl.ToString()</option>
+                                    <option value=@SslMode.StartTls>@SslMode.StartTls.ToString()</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="username">Username</label>
+                                <input type="text"
+                                       class="form-control"
+                                       id="username"
+                                       placeholder="Username"
+                                       bind="@options.SmtpOptions.Username"/>
+                            </div>
+                            <div class="form-group">
+                                <label for="password">Password</label>
+                                <input type="password"
+                                       class="form-control"
+                                       id="password"
+                                       placeholder="Password"
+                                       bind="@options.SmtpOptions.Password"/>
+                            </div>
+                            <div class="form-group">
+                                <label for="protocol">Send verbosity</label>
+                                <select class="form-control"
+                                        id="protocol"
+                                        bind="@options.SmtpOptions.SendVerbosity">
+                                    <option value=@SendVerbosity.All>Send all reports</option>
+                                    <option value=@SendVerbosity.PartialFailures>Send only partial failures</option>
+                                    <option value=@SendVerbosity.Failures>Send only failures</option>
+                                    <option value=@SendVerbosity.None>Do not send anything</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="localDomains">Send to</label>
+                                <div id="localDomains">
+                                    @{ var k = 0;}
+                                    @foreach (var sendTo in options.SmtpOptions.SendTo)
+                                    {
+                                        var sendToIndex = k;
+                                        <div class="input-group mb-1">
+                                            <input type="text" class="form-control" placeholder="Domain" bind="@options.SmtpOptions.SendTo[sendToIndex]"/>
+                                            <div class="input-group-append">
+                                                <button class="btn btn-danger" type="button" onclick=@{() => RemoveSendTo(localIndex, sendToIndex)}>
+                                                    <span class="oi oi-trash" aria-hidden="true"></span>
+                                                </button>
+                                            </div>
+                                        </div>
+                                        j++;
+                                    }
+                                    <button class="btn btn-success" type="button" onclick=@{() => AddNewSendTo(localIndex)}>Add new</button>
+                                </div>
+                            </div>
                         }
-                        <button class="btn btn-success" type="button" onclick=@{() => AddNewLocalDomain(localIndex)}>Add new</button>
+                        else
+                        {
+                            <div class="form-group">
+                            <label for="server">Server</label>
+                            <input type="text"
+                                   class="form-control"
+                                   id="server"
+                                   placeholder="Server"
+                                   disabled="disabled"/>
+                        </div>
+                        <div class="form-group">
+                            <label for="protocol">Protocol</label>
+                            <select class="form-control"
+                                    id="protocol"
+                                    disabled="disabled">
+                                <option value=@SslMode.Auto>@SslMode.Auto.ToString()</option>
+                                <option value=@SslMode.NoSsl>@SslMode.NoSsl.ToString()</option>
+                                <option value=@SslMode.Ssl>@SslMode.Ssl.ToString()</option>
+                                <option value=@SslMode.StartTls>@SslMode.StartTls.ToString()</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="username">Username</label>
+                            <input type="text"
+                                   class="form-control"
+                                   id="username"
+                                   placeholder="Username"
+                                   disabled="disabled"/>
+                        </div>
+                        <div class="form-group">
+                            <label for="password">Password</label>
+                            <input type="password"
+                                   class="form-control"
+                                   id="password"
+                                   placeholder="Password"
+                                   disabled="disabled"/>
+                        </div>
+                        }
                     </div>
                 </div>
-                
-                <button type="button" class="btn btn-danger" disabled=@disableRemove onclick=@{() => RemoveServer(localIndex)}>Remove</button>
             </form>
         </div>
         i++;
@@ -80,15 +213,15 @@
 
 @functions
 {
-    public bool Loading { get; set; }
-    private List<ImapClientOptions> Options { get; set; }
+    private bool Loading { get; set; }
+    private List<ServerOptions> Options { get; set; }
 
     protected override async Task OnInitAsync()
     {
         Loading = true;
         try
         {
-            Options = await Http.GetJsonAsync<List<ImapClientOptions>>("api/Settings");
+            Options = await Http.GetJsonAsync<List<ServerOptions>>("api/Settings");
             if (Options.Count == 0)
                 AddNewServer();
         }
@@ -100,7 +233,10 @@
 
     private void AddNewServer()
     {
-        Options.Add(new ImapClientOptions());
+        Options.Add(new ServerOptions
+        {
+            ImapOptions = new ImapOptions()
+        });
     }
 
     private void RemoveServer(int index)
@@ -123,12 +259,38 @@
 
     private void RemoveLocalDomain(int localIndex, int localDomainIndex)
     {
-        Options[localIndex].LocalDomains.RemoveAt(localDomainIndex);
+        Options[localIndex].ImapOptions.LocalDomains.RemoveAt(localDomainIndex);
     }
 
     private void AddNewLocalDomain(int localIndex)
     {
-        Options[localIndex].LocalDomains.Add("");
+        Options[localIndex].ImapOptions.LocalDomains.Add("");
+    }
+
+    private void SmtpCheckOnChange(int localIndex, UIChangeEventArgs eventArgs)
+    {
+        var @checked = (bool) eventArgs.Value;
+        Console.WriteLine("dupa " + @checked);
+        Options[localIndex].SmtpOptions = @checked ? new SmtpOptions() : null;
+    }
+
+    private void CopyOptions(int localIndex)
+    {
+        var localOptions = Options[localIndex];
+        localOptions.SmtpOptions.Server = localOptions.ImapOptions.Server;
+        localOptions.SmtpOptions.Protocol = localOptions.ImapOptions.Protocol;
+        localOptions.SmtpOptions.Username = localOptions.ImapOptions.Username;
+        localOptions.SmtpOptions.Password = localOptions.ImapOptions.Password;
+    }
+
+    private void RemoveSendTo(int localIndex, int sendToIndex)
+    {
+        Options[localIndex].SmtpOptions.SendTo.RemoveAt(sendToIndex);
+    }
+
+    private void AddNewSendTo(int localIndex)
+    {
+        Options[localIndex].SmtpOptions.SendTo.Add("");
     }
 
 }

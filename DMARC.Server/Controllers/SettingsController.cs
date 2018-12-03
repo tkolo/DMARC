@@ -29,9 +29,9 @@ namespace DMARC.Server.Controllers
 {
     public class SettingsController : ApiController
     {
-        private readonly IWritableOptions<List<ImapClientOptions>> _options;
+        private readonly IWritableOptions<List<ServerOptions>> _options;
 
-        public SettingsController(IWritableOptions<List<ImapClientOptions>> options)
+        public SettingsController(IWritableOptions<List<ServerOptions>> options)
         {
             _options = options;
         }
@@ -44,7 +44,7 @@ namespace DMARC.Server.Controllers
 
         
         [HttpPost]
-        public Task<IActionResult> Post([FromBody] List<ImapClientOptions> options)
+        public Task<IActionResult> Post([FromBody] List<ServerOptions> options)
         {
             foreach (var clientOptions in options)
             {
@@ -53,7 +53,7 @@ namespace DMARC.Server.Controllers
                     clientOptions.Id = Guid.NewGuid().ToString();
                 }
 
-                if (string.IsNullOrEmpty(clientOptions.Server))
+                if (string.IsNullOrEmpty(clientOptions.ImapOptions?.Server))
                     return Task.FromResult((IActionResult) BadRequest());
             }
             

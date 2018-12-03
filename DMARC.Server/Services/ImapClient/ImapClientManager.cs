@@ -29,12 +29,12 @@ namespace DMARC.Server.Services.ImapClient
 {
     public class ImapClientManager : IImapClientManager
     {
-        private readonly List<ImapClientOptions> _options = new List<ImapClientOptions>();
+        private readonly List<ServerOptions> _options = new List<ServerOptions>();
         private readonly List<IImapClient> _clients = new List<IImapClient>();
         private readonly IDisposable _optionsChange;
         private readonly IServiceScope _scope;
 
-        public ImapClientManager(IOptionsMonitor<List<ImapClientOptions>> optionsMonitor,
+        public ImapClientManager(IOptionsMonitor<List<ServerOptions>> optionsMonitor,
             IServiceScopeFactory scopeFactory)
         {
             _optionsChange = optionsMonitor.OnChange(ReloadClients);
@@ -47,7 +47,7 @@ namespace DMARC.Server.Services.ImapClient
             await LoadAndConnectClients();
         }
 
-        private async void ReloadClients(List<ImapClientOptions> options)
+        private async void ReloadClients(List<ServerOptions> options)
         {
             _options.Clear();
             _options.AddRange(options);

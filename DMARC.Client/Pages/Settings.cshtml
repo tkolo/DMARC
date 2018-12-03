@@ -206,6 +206,17 @@
                                        placeholder="Address"
                                        disabled="disabled"/>
                             </div>
+                            <div class="form-group">
+                                <label for="sendVerbosity">Send verbosity</label>
+                                <select class="form-control"
+                                        id="sendVerbosity"
+                                        disabled="disabled">
+                                    <option value=@SendVerbosity.All>Send all reports</option>
+                                    <option value=@SendVerbosity.PartialFailures>Send only partial failures</option>
+                                    <option value=@SendVerbosity.Failures>Send only failures</option>
+                                    <option value=@SendVerbosity.None>Do not send anything</option>
+                                </select>
+                            </div>
                         }
                     </div>
                 </div>

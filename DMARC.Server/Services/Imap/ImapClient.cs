@@ -31,6 +31,7 @@ using MailKit;
 using MailKit.Search;
 using MailKit.Security;
 using Microsoft.EntityFrameworkCore.Internal;
+using Microsoft.Extensions.Logging;
 
 namespace DMARC.Server.Services.Imap
 {
@@ -40,17 +41,19 @@ namespace DMARC.Server.Services.Imap
         private readonly IReportRepository _reportRepository;
         private readonly IImapClientDynamicSettingsRepository _settingsRepository;
         private readonly ISmtpService _smtpService;
+        private readonly ILogger<ImapClient> _logger;
         private MailKit.Net.Imap.ImapClient _client;
         private CancellationTokenSource _tokenSource;
         private Task _currentTask;
 
         public ImapClient(IReportRepository reportRepository,
             IImapClientDynamicSettingsRepository settingsRepository, 
-            ISmtpService smtpService)
+            ISmtpService smtpService, ILogger<ImapClient> logger)
         {
             _reportRepository = reportRepository;
             _settingsRepository = settingsRepository;
             _smtpService = smtpService;
+            _logger = logger;
         }
 
         public void Start(ServerOptions options)
@@ -77,6 +80,11 @@ namespace DMARC.Server.Services.Imap
                 await Connect(cancellationToken);
                 await FetchNewReports(cancellationToken);
                 await ListenForNewReports(cancellationToken);
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, $"{_options.ImapOptions.Server}: exception thrown in IMAP client code");
+                throw;
             }
             finally
             {
